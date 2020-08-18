@@ -1,0 +1,33 @@
+{
+	"name": "LEOR",
+	"steps": [
+		{
+			"name": "F2L",
+			"regex": "EO|(EO)?Stripe|Last pair|.*LS|.*LP|.*LE|(Left|Right) (pair|square|block)"
+		},
+		{
+			"name": "LL",
+			"regex": ".*LL|LL.*|AUF|OLLCP|CLLEF|OLL\\(CP\\)"
+		},
+		{
+			"name": "Left block",
+			"regex": "Left (pair|square|block)|FB|First block"
+		},
+		{
+			"name": "EOStripe",
+			"regex": "EO|(EO)?Stripe"
+		},
+		{
+			"name": "Right block",
+			"regex": "(Last|Right) pair|Right (pair|square|block)|.*LS|.*LP|.*LE"
+		},
+		{
+			"name": "OLS",
+			"regex": "(Last|Right) pair|.*LS|.*LP|.*LE|(O|PO|OCE|OCPE|OC(P)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)"
+		},
+		{
+			"name": "PLL",
+			"regex": "(P|CP|EP)LL|AUF"
+		}
+	]
+}

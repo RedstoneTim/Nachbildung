@@ -1,0 +1,37 @@
+{
+	"name": "Roux",
+	"steps": [
+		{
+			"name": "F2B",
+			"regex": "(F|S)(B|S|P)"
+		},
+		{
+			"name": "L10P",
+			"regex": "C*LL|LSE|EOLR(b)?|EO|LR|EP|4(a|b|c)"
+		},
+		{
+			"name": "FB",
+			"regex": "F(B|S|P)"
+		},
+		{
+			"name": "SS",
+			"regex": "S(S|B)"
+		},
+		{
+			"name": "SP",
+			"regex": "SP"
+		},
+		{
+			"name": "CMLL",
+			"regex": "C*LL"
+		},
+		{
+			"name": "EOLRb",
+			"regex": "EO|(EO)?LR|4(a|b)"
+		},
+		{
+			"name": "EP",
+			"regex": "EP|4c"
+		}
+	]
+}

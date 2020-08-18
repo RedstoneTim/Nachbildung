@@ -1,0 +1,25 @@
+{
+	"name": "CFOP",
+	"steps": [
+		{
+			"name": "F2L",
+			"regex": "X*Cross(\\+\\d)?|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE"
+		},
+		{
+			"name": "LL",
+			"regex": ".*LL|LL.*|AUF|OLLCP|CLLEF|OLL\\(CP\\)"
+		},
+		{
+			"name": "Cross+1",
+			"regex": "X*Cross(\\+\\d)?|Daisy|1st pair"
+		},
+		{
+			"name": "OLS",
+			"regex": "4th pair|.*LS|.*LP|.*LE|(O|PO|OCE|OCPE|OC(P)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)"
+		},
+		{
+			"name": "PLL",
+			"regex": "(P|CP|EP)LL|AUF"
+		}
+	]
+}
