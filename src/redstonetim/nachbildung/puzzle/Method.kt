@@ -3,15 +3,13 @@ package redstonetim.nachbildung.puzzle
 import org.json.JSONObject
 import org.json.JSONWriter
 import redstonetim.nachbildung.io.JSONSerializable
-import redstonetim.nachbildung.Step
+import redstonetim.nachbildung.setting.Options
 import java.util.function.Predicate
 
+// TODO: Fix ZZ (EOLine) because last slot and OLS
 // TODO: Maybe associate with puzzle?
 class Method(private val name: String, private val steps: LinkedHashMap<String, Predicate<Step>>) : JSONSerializable<Method> {
-    companion object : HashMap<String, Method>() {
-        // TODO: Use options for default method
-        fun getDefaultMethod(): Method = Method["CFOP"]!!
-    }
+    companion object : HashMap<String, Method>()
 
     init {
         Method[name] = this
@@ -80,5 +78,5 @@ class Method(private val name: String, private val steps: LinkedHashMap<String, 
     }
 
     override fun fromJSON(jsonObject: JSONObject): Method = Method[jsonObject.optString("method")]
-            ?: getDefaultMethod()
+            ?: Options.defaultMethod.value
 }

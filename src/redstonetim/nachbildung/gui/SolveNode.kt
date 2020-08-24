@@ -1,43 +1,42 @@
-package redstonetim.nachbildung
+package redstonetim.nachbildung.gui
 
 import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
-import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
 import javafx.scene.Group
-import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.TextArea
 import javafx.scene.control.TextField
 import javafx.scene.layout.HBox
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.stage.Modality
 import javafx.stage.Stage
 import org.json.JSONObject
 import org.json.JSONWriter
-import redstonetim.nachbildung.gui.StatisticsTable
-import redstonetim.nachbildung.gui.TimeTextField
-import redstonetim.nachbildung.io.Converter
+import redstonetim.nachbildung.Main
+import redstonetim.nachbildung.export.Exporter
+import redstonetim.nachbildung.gui.fxml.FXMLHandler
+import redstonetim.nachbildung.gui.textfield.TimeTextField
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.Puzzle
-import redstonetim.nachbildung.settings.Options
+import redstonetim.nachbildung.puzzle.Step
+import redstonetim.nachbildung.setting.Options
 
-// TODO: Make statistics work again (worked like literally two minutes ago)
+// TODO: Fix issue that all solves have to be reloaded
 class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
     companion object {
-        private val fxmlLocation = this::class.java.getResource("solve_node.fxml")
-
         fun create(reconstruction: ReconstructionNode): SolveNode {
-            val loader = FXMLLoader()
-            val content: Node = loader.load(fxmlLocation.openStream())
-            val solve: SolveNode = loader.getController()
+            val loaded = FXMLHandler.loadSolve()
+            val solve = loaded.second
             solve.reconstruction = reconstruction
             solve.puzzleVisualization = reconstruction.puzzleSetting.value.getPuzzleVisualization()
-            solve.puzzleVisualizationGroup.children.add(solve.puzzleVisualization.node)
-            solve.children.add(content)
+            solve.puzzleVisualizationContainer.children.add(solve.puzzleVisualization.node)
+            StackPane.setAlignment(solve.puzzleVisualization.node, Pos.CENTER)
+            solve.children.add(loaded.first)
             solve.update()
             return solve
         }
@@ -58,7 +57,7 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
     private lateinit var puzzleVisualization: Puzzle.PuzzleVisualization
 
     @FXML
-    private lateinit var puzzleVisualizationGroup: Group
+    private lateinit var puzzleVisualizationContainer: StackPane
 
     @FXML
     private lateinit var scrambleTextField: TextField
@@ -79,7 +78,7 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
 
     @FXML
     private fun onExportSolveButton(event: ActionEvent) {
-        Converter.exportSolve(this)
+        Exporter.exportSolve(this)
     }
 
     @FXML
@@ -102,6 +101,10 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
                 Scene(content)
         remove.showAndWait()
     }
+
+    override fun toString(): String = reconstruction.toString()
+
+    fun getSuggestedFileName(): String = reconstruction.getSuggestedFileName()
 
     override fun toJSON(jsonWriter: JSONWriter) {
         jsonWriter.`object`()
@@ -127,27 +130,44 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
 
     fun getSolveNumber(): Int = reconstruction.getSolves().indexOf(this) + 1
 
-    fun getScrambleMoves(): String = scrambleTextField.text
+    fun getScrambleMoves(): String = scrambleTextField.text.trim()
 
-    fun getSolutionMoves(untilCaret: Boolean = false): String = (if (untilCaret) solutionTextArea.text.substring(0, solutionTextArea.caretPosition) else solutionTextArea.text)
-            .split('\n').stream().map {
-                val end = it.indexOf(Options.solutionSeparator.value)
-                it.substring(0, if (end >= 0) end else it.length).trim()
-            }.filter(String::isNotBlank).reduce { s1, s2 -> "$s1 $s2" }.orElse("")
+    fun getSolutionMoves(untilCaret: Boolean): String {
+        return (if (untilCaret) solutionTextArea.text.substring(0, solutionTextArea.caretPosition) else solutionTextArea.text)
+                .split('\n').stream().map {
+                    val start = it.indexOf(Options.solutionSeparator.value) + 1
+                    if (start == 0) {
+                        ""
+                    } else {
+                        val end = it.indexOf(Options.solutionSeparator.value, start)
+                        it.substring(start, if (end >= 0) end else it.length).trim()
+                    }
+                }.filter(String::isNotBlank).reduce { s1, s2 -> "$s1 $s2" }.orElse("")
+    }
+
+    private fun getStepsOrNull(): List<Step>? = Step.parseStepsFromText(solutionTextArea.text, timeTextField.textAsTime, reconstruction.methodSetting.value, reconstruction.autoFillStepsSetting.value,
+            scrambleTextField.text, reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value)
 
     /**
      * Returns a list of [Step]s parsed from the given solution input.
      */
-    fun getSteps(): List<Step> = Step.parseStepsFromText(solutionTextArea.text, timeTextField.textAsTime, reconstruction.methodSetting.value, reconstruction.autoFillStepsSetting.value,
-            scrambleTextField.text, reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value)
+    fun getSteps(): List<Step> = getStepsOrNull() ?: emptyList()
 
     fun getReconstructionLink(): String = reconstruction.puzzleSetting.value.getReconstructionLink(this)
 
     fun update(updateReconstruction: Boolean = true) {
-        statisticsTable.update(reconstruction.methodSetting.value.getStatisticsSteps(getSteps()))
+        val steps = getStepsOrNull()
+        // TODO: Make stuff red as well when the scramble sucks
+        solutionTextArea.style = if (steps == null) {
+            "-fx-text-box-border: red; -fx-focus-color: red; -fx-control-inner-background: rgba(255,0,0,0.1); -fx-text-fill: #000000;"
+        } else {
+            ""
+        }
+        statisticsTable.update(reconstruction.methodSetting.value.getStatisticsSteps(steps ?: emptyList()))
         if (!puzzleVisualization.representsPuzzle(reconstruction.puzzleSetting.value)) {
             puzzleVisualization = reconstruction.puzzleSetting.value.getPuzzleVisualization()
-            puzzleVisualizationGroup.children.setAll(puzzleVisualization.node)
+            puzzleVisualizationContainer.children.setAll(puzzleVisualization.node)
+            StackPane.setAlignment(puzzleVisualization.node, Pos.CENTER)
         }
         if (updateReconstruction) {
             reconstruction.update(false)

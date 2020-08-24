@@ -3,7 +3,7 @@
 	"steps": [
 		{
 			"name": "F2L",
-			"regex": "EO|(EO)?X*(EO)?Line(\\+\\d)?|Daisy|Last pair|.*LS|.*LP|.*LE|(Left|Right) (pair|square|block)"
+			"regex": "EO|(EO)?X*(EO)?(Pseudo)?Line(\\+\\d)?|Daisy|Last pair|.*LS|.*LP|.*LE|(Left|Right) (pair|square|block)"
 		},
 		{
 			"name": "LL",
@@ -11,7 +11,7 @@
 		},
 		{
 			"name": "EOLine",
-			"regex": "EO|(EO)?X*(EO)?Line(\\+\\d)?|Daisy"
+			"regex": "EO|(EO)?X*(EO)?(Pseudo)?Line(\\+\\d)?|Daisy"
 		},
 		{
 			"name": "Left block",

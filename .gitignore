@@ -8,6 +8,7 @@ bin
 
 # idea
 out
+.xml
 *.ipr
 *.iws
 *.iml
@@ -43,3 +44,4 @@ run
 /out/
 /.idea/
 options.json
+/Nachbildung/

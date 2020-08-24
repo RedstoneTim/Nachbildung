@@ -1,11 +1,8 @@
-package redstonetim.nachbildung
+package redstonetim.nachbildung.puzzle
 
-import redstonetim.nachbildung.puzzle.Method
-import redstonetim.nachbildung.puzzle.Puzzle
-import redstonetim.nachbildung.settings.Options
-import redstonetim.nachbildung.settings.TimeInputType
+import redstonetim.nachbildung.setting.Options
+import redstonetim.nachbildung.setting.TimeInputType
 import java.math.RoundingMode
-import java.nio.DoubleBuffer
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.*
@@ -19,15 +16,15 @@ import kotlin.math.round
  * @param movesSTM The moves performed in this step in Slice Turn Metric.
  * @param movesETM The moves performed in this step in Execution Turn Metric.
  */
-// TODO: Add DNS?
-open class Step(val name: String, stepTime: Double, val movesSTM: Int, val movesETM: Int, val moves: String, vararg val statsToAddTo: String) {
+// TODO: Custom classes for special steps (inspection, penalty, offset etc.)
+open class Step(val name: String, stepTime: Double, val movesSTM: Int, val movesETM: Int, val moves: List<Puzzle.Move>, vararg val statsToAddTo: String) {
     companion object {
         const val INSPECTION = "Inspection"
         const val TOTAL = "Total"
         const val PENALTY = "Penalty"
         const val OFFSET = "Offset"
-        private val TIME_REGEX = Regex("\\s*(\\d*:)?\\d*(\\.\\d*)?\\s*")
-        private val DNF_REGEX = Regex("^DN*F*\$") // TODO: Better regex?
+        private val TIME_REGEX = Regex("(((\\d*):)?([0-5]?\\d):)?([0-5]?\\d)((\\.\\d{2})\\d*)?")
+        private val DNF_REGEX = Regex("^DN*F*\$")
         private val standardDecimalFormat = DecimalFormat("0.00", DecimalFormatSymbols(Locale.US))
         private val bigDecimalFormat = DecimalFormat("00.00", DecimalFormatSymbols(Locale.US))
         private val plusTwoDecimalFormat = DecimalFormat("0.##", DecimalFormatSymbols(Locale.US))
@@ -38,27 +35,25 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
             plusTwoDecimalFormat.roundingMode = RoundingMode.HALF_UP
         }
 
-        fun isInspection(stepName: String, time: Double): Boolean = (stepName == INSPECTION) && (time == 0.0)
+        fun isInspection(stepName: String, time: Double, moves: List<Puzzle.Move>): Boolean = (stepName == INSPECTION) && (time == 0.0) && moves.isNotEmpty() && moves.all { it.isRotation }
 
         fun isPenalty(stepName: String, noMoves: Boolean): Boolean = (stepName == PENALTY) && noMoves
 
-        // TODO: Fix penalty
         fun isValidTime(time: String, allowDNF: Boolean = true): Boolean =
-                (time.matches(DNF_REGEX) && allowDNF)
-                        || time.matches(TIME_REGEX)
+                (time.trim().matches(DNF_REGEX) && allowDNF)
+                        || time.trim().matches(TIME_REGEX)
 
-        // TODO: Parse using regex?
-        // TODO: Use [isValidTime] function?
         fun parseTime(time: String): Double {
-            val trimmedTime = time.trim()
+            val matchResult = TIME_REGEX.matchEntire(time.trim())
             return when {
-                trimmedTime.matches(DNF_REGEX) -> Double.POSITIVE_INFINITY
-                trimmedTime.matches(TIME_REGEX) -> {
-                    val colonPos = trimmedTime.indexOf(':')
-                    val minutes = if (colonPos >= 0) trimmedTime.substring(0, colonPos).toIntOrNull() ?: 0 else 0
-                    val seconds = trimmedTime.substring(colonPos + 1).toDoubleOrNull() ?: 0.0
-                    (minutes * 60).toDouble() + (round(seconds * 100.0) / 100.0)
+                (matchResult != null) -> {
+                    val hours = matchResult.groups[3]?.value?.toIntOrNull() ?: 0
+                    val minutes = matchResult.groups[4]?.value?.toIntOrNull() ?: 0
+                    val seconds = matchResult.groups[5]?.value?.toIntOrNull() ?: 0
+                    val millis = matchResult.groups[7]?.value?.toDoubleOrNull() ?: 0.0
+                    (((hours * 60.0) + minutes) * 60.0) + seconds + millis
                 }
+                time.trim().matches(DNF_REGEX) -> Double.POSITIVE_INFINITY
                 else -> 0.0
             }
         }
@@ -78,24 +73,27 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
         /**
          * Parses a list of Steps from the given input
          */
-        // TODO: Somehow make this use start time
         fun parseStepsFromText(solution: String, timeExclDNF: Double, method: Method, autoFillStep: Boolean, scramble: String, puzzle: Puzzle,
-                               fps: Double, timeInputType: TimeInputType): List<Step> {
-            val performedMoves = StringBuilder()
-            var offset = ""
+                               fps: Double, timeInputType: TimeInputType): List<Step>? {
+            val performedMoves = arrayListOf<Puzzle.Move>()
+            val offset = arrayListOf<Puzzle.Move>()
             val steps = solution.split('\n').mapNotNull { line ->
                 val parts = line.split(Options.solutionSeparator.value).map { it.trim() }
-                val moves = parts.getOrElse(0) { "" }.let { if (offset.isBlank() || it.isBlank()) it else puzzle.offsetMoves(it, offset) }
+                val moves = puzzle.moveManager.parseMoves(parts.getOrElse(1) { "" })?.let {
+                    if (offset.isEmpty()) it else puzzle.moveManager.offsetMoves(it, offset)
+                } ?: return@parseStepsFromText null
                 val rawName = parts.getOrElse(2) { "" }
 
                 // add offset
-                if ((rawName == OFFSET) && !moves.isBlank()) {
-                    offset = moves
+                if ((rawName == OFFSET) && moves.isNotEmpty()) {
+                    if (moves.all { it.isRotation }) {
+                        moves.let { offset.addAll(it) }
+                    }
                     return@mapNotNull null
                 }
 
                 // add moves for auto-fill
-                performedMoves.append(" ").append(moves)
+                performedMoves.addAll(moves)
 
                 // parse name
                 val name = if (rawName.isBlank()) {
@@ -104,12 +102,14 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
                     rawName
                 }
 
+                // TODO: Add some kind of error thing if the step doesn't exist
+
                 // parse time
-                val isPenalty = isPenalty(name, moves.isBlank())
-                val rawTime = parts.getOrNull(1)
+                val isPenalty = isPenalty(name, moves.isEmpty())
+                val rawTime = parts.getOrNull(0)
                 val time = if ((rawTime != null) && isValidTime(rawTime, isPenalty)) {
                     val parsedTime = parseTime(rawTime)
-                    if((timeInputType == TimeInputType.TOTAL_FRAMES) || (timeInputType == TimeInputType.START_FRAME)) parsedTime / fps
+                    if ((timeInputType == TimeInputType.TOTAL_FRAMES) || (timeInputType == TimeInputType.START_FRAME)) parsedTime / fps
                     else parsedTime
                 } else {
                     return@mapNotNull null
@@ -117,13 +117,14 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
 
                 // you're not allowed to name anything Penalty or Inspection which isn't actually a penalty or inspection
                 // Inspection is also not allowed to have no moves (though you can have that if you count with frames)
-                if ((!isPenalty && (name == PENALTY)) || ((name == INSPECTION) && (!isInspection(name, time) || moves.isBlank()))) {
+                if ((!isPenalty && (name == PENALTY)) || ((name == INSPECTION) && !isInspection(name, time, moves))) {
                     return@mapNotNull null
                 }
 
                 return@mapNotNull if (parts.size > 3) Step(moves, time, name, puzzle, *parts.subList(3, parts.size).toTypedArray())
                 else Step(moves, time, name, puzzle)
             }
+            // TODO: For time periods, make last time automatically calculate from full time
             return if ((timeInputType == TimeInputType.START_TIME) || (timeInputType == TimeInputType.START_FRAME)) {
                 // TODO: Clean this up because it's a literal mess
                 val mutableSteps = steps.toMutableList()
@@ -153,14 +154,14 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
         }
     }
 
-    constructor(moves: String, time: Double, name: String, puzzle: Puzzle, vararg statsToAddTo: String)
-            : this(name, time, puzzle.calculateMovecountSTM(moves), puzzle.calculateMovecountETM(moves), moves, *statsToAddTo)
+    constructor(moves: List<Puzzle.Move>, time: Double, name: String, puzzle: Puzzle, vararg statsToAddTo: String)
+            : this(name, time, puzzle.moveManager.calculateMovecountSTM(moves), puzzle.moveManager.calculateMovecountETM(moves), moves, *statsToAddTo)
 
     val time = round(stepTime * 100.0) / 100.0 // round time so we don't end up with incorrect statistics
     private val stps: Double = if (time <= 0) 0.0 else round((movesSTM.toDouble() / time) * 100.0) / 100.0
     private val etps: Double = if (time <= 0) 0.0 else round((movesETM.toDouble() / time) * 100.0) / 100.0
 
-    fun isInspection(): Boolean = isInspection(name, time)
+    fun isInspection(): Boolean = isInspection(name, time, moves)
 
     fun isPenalty(): Boolean = isPenalty(name, (movesSTM == 0) && (movesETM == 0))
 
@@ -168,7 +169,7 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
             if (isPenalty()) {
                 "// ${getTimeAsString()} $name"
             } else {
-                "$moves // $name".trim()
+                "${moves.joinToString(" ")} // $name".trim()
             }
 
     // use these for statistics so numbers are shown as 1.00 instead of 1 or 1.0000
@@ -182,7 +183,7 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
 
     fun getETPSAsString(): String = standardDecimalFormat.format(etps)
 
-    class StatisticsStep(name: String, time: Double, movesSTM: Int, movesETM: Int) : Step(name, time, movesSTM, movesETM, "") {
+    class StatisticsStep(name: String, time: Double, movesSTM: Int, movesETM: Int) : Step(name, time, movesSTM, movesETM, emptyList()) {
         companion object {
             fun getMeanSteps(steps: List<List<Step>>, stepNames: List<String>): List<StatisticsStep> {
                 val meanSteps = arrayListOf<StatisticsStep>()

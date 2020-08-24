@@ -3,7 +3,7 @@
 	"steps": [
 		{
 			"name": "F2L",
-			"regex": "EO|(EO)?X*(EO)?(Line|Arrow|Cross)(\\+\\d)?|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE"
+			"regex": "EO|(EO)?X*(EO)?(Pseudo)?(Line|Arrow|Cross)(\\+\\d)?|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE"
 		},
 		{
 			"name": "LL",
@@ -11,7 +11,7 @@
 		},
 		{
 			"name": "EOCross",
-			"regex": "EO|(EO)?X*(EO)?(Line|Arrow|Cross)(\\+\\d)?|Daisy"
+			"regex": "EO|(EO)?X*(EO)?(Pseudo)?(Line|Arrow|Cross)(\\+\\d)?|Daisy"
 		},
 		{
 			"name": "OLS",

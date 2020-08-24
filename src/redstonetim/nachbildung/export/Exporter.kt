@@ -1,4 +1,4 @@
-package redstonetim.nachbildung.io
+package redstonetim.nachbildung.export
 
 import javafx.geometry.Pos
 import javafx.scene.Scene
@@ -12,36 +12,42 @@ import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import javafx.stage.Modality
 import javafx.stage.Stage
+import org.json.JSONObject
+import org.json.JSONWriter
 import redstonetim.nachbildung.Main
-import redstonetim.nachbildung.ReconstructionNode
-import redstonetim.nachbildung.SolveNode
+import redstonetim.nachbildung.gui.ReconstructionNode
+import redstonetim.nachbildung.gui.SolveNode
+import redstonetim.nachbildung.io.IOHandler
+import redstonetim.nachbildung.io.JSONSerializable
 
-interface Converter {
+interface Exporter : JSONSerializable<Exporter> {
     companion object {
-        private val converterMap = HashMap<String, Converter>()
+        val converterMap = HashMap<String, Exporter>()
 
         init {
-            register(MarkdownConverter, BBCodeConverter)
-        }
-
-        fun register(vararg converters: Converter) {
-            for (converter in converters) {
+            for (converter in arrayOf(MarkdownExporter, BBCodeExporter)) {
                 converterMap[converter.toString()] = converter
             }
         }
 
-        fun exportReconstruction(reconstruction: ReconstructionNode) = export(reconstruction)
+        fun exportReconstruction(reconstruction: ReconstructionNode) {
+            reconstruction.update(true)
+            export(reconstruction, reconstruction.getSuggestedFileName())
+        }
 
-        fun exportSolve(solve: SolveNode) = export(solve)
+        fun exportSolve(solve: SolveNode) {
+            solve.update(true)
+            export(solve, solve.getSuggestedFileName())
+        }
 
-        private fun export(toExport: Any) {
+        private fun export(toExport: Any, suggestedFileName: String) {
             val exportStage = Stage()
             exportStage.initModality(Modality.APPLICATION_MODAL)
             val output = TextArea()
             output.promptText = "Output"
             output.isEditable = false
 
-            val exportOptions = ComboBox<Converter>()
+            val exportOptions = ComboBox<Exporter>()
             val copyButton = Button("Copy to clipboard")
             val saveAsButton = Button("Save As")
             val closeButton = Button("Close")
@@ -49,7 +55,7 @@ interface Converter {
             exportOptions.promptText = "Choose converter"
             exportOptions.items.addAll(converterMap.values)
             exportOptions.setOnAction {
-                output.text = when(toExport) {
+                output.text = when (toExport) {
                     is ReconstructionNode -> exportOptions.value.processReconstruction(toExport)
                     is SolveNode -> exportOptions.value.processSolve(toExport)
                     else -> "An issue occurred: The value $toExport is neither a reconstruction nor a solve.".also { println(it) }
@@ -66,9 +72,10 @@ interface Converter {
             }
             saveAsButton.isDisable = true
             saveAsButton.setOnAction {
-                (if (exportOptions.value == null) IOHandler.getFileChooser("Save As")
-                else IOHandler.getFileChooser("Save As", *exportOptions.value.fileEndings))
-                        .showSaveDialog(exportStage)?.also { it.writeText(output.text) }
+                val extension = exportOptions.value.fileEndings.getOrNull(0)?.extensions?.getOrNull(0)
+                IOHandler.showSaveFileDialog("Save As", exportStage,
+                        "$suggestedFileName.${extension?.substring(extension.lastIndexOf('.') + 1) ?: "txt"}",
+                        *exportOptions.value.fileEndings)?.writeText(output.text)
             }
             closeButton.setOnAction {
                 exportStage.close()
@@ -77,19 +84,26 @@ interface Converter {
             val lastRow = HBox(exportOptions, copyButton, saveAsButton, closeButton)
             lastRow.alignment = Pos.CENTER
             val content = VBox(output, lastRow)
-
             exportStage.title = Main.TITLE
             exportStage.scene = Scene(content)
+            exportOptions.requestFocus()
             exportStage.showAndWait()
         }
     }
-    
+
     val fileEndings: Array<FileChooser.ExtensionFilter>
-        get() = arrayOf(FileChooser.ExtensionFilter("All files", "*.*"))
+        get() = arrayOf(FileChooser.ExtensionFilter("Text files", ".txt"), FileChooser.ExtensionFilter("All files", "*.*"))
 
     fun processReconstruction(reconstruction: ReconstructionNode): String
 
     fun processSolve(solve: SolveNode): String
 
     override fun toString(): String
+
+    override fun toJSON(jsonWriter: JSONWriter) {
+        jsonWriter.key("converter").value(toString())
+    }
+
+    override fun fromJSON(jsonObject: JSONObject): Exporter = converterMap[jsonObject.optString("converter")]
+            ?: MarkdownExporter
 }

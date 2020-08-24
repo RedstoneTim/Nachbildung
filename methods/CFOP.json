@@ -3,7 +3,7 @@
 	"steps": [
 		{
 			"name": "F2L",
-			"regex": "X*Cross(\\+\\d)?|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE"
+			"regex": "X*(Pseudo )?Cross(\\+\\d)?|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE"
 		},
 		{
 			"name": "LL",
@@ -11,7 +11,7 @@
 		},
 		{
 			"name": "Cross+1",
-			"regex": "X*Cross(\\+\\d)?|Daisy|1st pair"
+			"regex": "X*(Pseudo)?Cross(\\+\\d)?|Daisy|1st pair"
 		},
 		{
 			"name": "OLS",

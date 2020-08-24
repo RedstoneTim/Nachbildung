@@ -1,12 +1,12 @@
-package redstonetim.nachbildung.io
+package redstonetim.nachbildung.export
 
 import javafx.stage.FileChooser
-import redstonetim.nachbildung.ReconstructionNode
-import redstonetim.nachbildung.SolveNode
+import redstonetim.nachbildung.gui.ReconstructionNode
+import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.gui.StatisticsTable
 import java.net.URI
 
-object MarkdownConverter: Converter {
+object MarkdownExporter: Exporter {
     private val TABLE_REGEX = Regex("[^|]")
 
     override val fileEndings: Array<FileChooser.ExtensionFilter> = arrayOf(FileChooser.ExtensionFilter("Markdown files", "*.md", "*.markdown"),
@@ -14,7 +14,7 @@ object MarkdownConverter: Converter {
 
     override fun processReconstruction(reconstruction: ReconstructionNode): String =
     buildString {
-        append("# ").append(reconstruction.titleSetting.value).append("\n\n")
+        append("# ").append(reconstruction.toString()).append("\n\n")
         if (reconstruction.videoSetting.value.isNotBlank()) {
             append("[Link to video](").append(reconstruction.videoSetting.value).append(")\n\n")
         }
@@ -36,12 +36,12 @@ object MarkdownConverter: Converter {
 
     private fun processSolve(solve: SolveNode, standalone: Boolean): String = buildString {
         if (standalone) {
-            append("# ").append(solve.reconstruction.titleSetting.value).append("\n\n")
+            append("# ").append(solve.reconstruction.toString()).append("\n\n")
             if (solve.reconstruction.videoSetting.value.isNotBlank()) {
                 append("[Link to video](").append(solve.reconstruction.videoSetting.value).append(")\n\n")
             }
         } else {
-            append("### Solve ").append(solve.getSolveNumber()).append("\n\n")
+            append("### Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\n\n")
         }
         append("```\n").append(solve.getScrambleMoves()).append("\n\n")
         solve.getSteps().forEach { append(it.toReconstructionString()).append("\n") }
@@ -59,7 +59,7 @@ object MarkdownConverter: Converter {
         append(top).append("\n").append(top.replace(TABLE_REGEX, "-"))
         for (statisticsStep in statistics.table.items) {
             append("\n").append(listOf(statisticsStep.name, statisticsStep.getTimeAsString(), statisticsStep.getMovesSTMAsString(),
-                    statisticsStep.getSTPSAsString(), statisticsStep.getMovesSTMAsString(), statisticsStep.getETPSAsString()).joinToString("|"))
+                    statisticsStep.getSTPSAsString(), statisticsStep.getMovesETMAsString(), statisticsStep.getETPSAsString()).joinToString("|"))
         }
     }
 

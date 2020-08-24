@@ -1,4 +1,4 @@
-package redstonetim.nachbildung.gui
+package redstonetim.nachbildung.gui.textfield
 
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
@@ -10,7 +10,11 @@ import java.util.*
 /**
  * A [TextField] that only accepts [Int] values
  */
-class IntTextField : TextField() {
+class IntTextField() : TextField() {
+    constructor(value: Int): this() {
+        textAsInt = value
+    }
+
     private val timeFormat = DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US))
     private val timeFormatter = TextFormatter<String> { c ->
         if (c.controlNewText.isNotEmpty()) {

@@ -6,8 +6,7 @@ import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.layout.VBox
-import redstonetim.nachbildung.ReconstructionNode
-import redstonetim.nachbildung.Step
+import redstonetim.nachbildung.puzzle.Step
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.ceil

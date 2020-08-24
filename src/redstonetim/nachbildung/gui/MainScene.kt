@@ -1,19 +1,18 @@
-package redstonetim.nachbildung
+package redstonetim.nachbildung.gui
 
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
-import javafx.geometry.Pos
 import javafx.scene.Scene
-import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.TabPane
-import javafx.scene.control.TextField
-import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import javafx.stage.Modality
 import javafx.stage.Stage
+import redstonetim.nachbildung.Main
 import redstonetim.nachbildung.io.IOHandler
+import redstonetim.nachbildung.setting.Options
+import redstonetim.nachbildung.setting.SettingsStage
 
 class MainScene {
     companion object {
@@ -32,6 +31,7 @@ class MainScene {
     private lateinit var tabPane: TabPane
 
     fun addReconstruction(reconstruction: ReconstructionNode) {
+        reconstruction.update()
         tabPane.tabs.add(reconstruction)
     }
 
@@ -48,52 +48,47 @@ class MainScene {
 
     @FXML
     private fun onMenuNew(event: ActionEvent) {
-        // TODO: Custom FXML
-        val newFile = Stage()
-        newFile.initModality(Modality.APPLICATION_MODAL)
-        newFile.title = Main.TITLE
-        val name = TextField("Unnamed")
-        name.promptText = "Name"
-        val finishButton = Button("Finish")
-        finishButton.setOnAction {
-            val reconstruction = ReconstructionNode.create(name.text)
+        val reconstruction = ReconstructionNode.create()
+        SettingsStage.open(reconstruction.settings, onSave = {
             reconstruction.addSolve(SolveNode.create(reconstruction))
             addReconstruction(reconstruction)
             setSelectedReconstruction(reconstruction)
-            newFile.close()
-        }
-        val cancelButton = Button("Cancel")
-        cancelButton.setOnAction { newFile.close() }
-        val buttons = HBox(finishButton, cancelButton)
-        buttons.alignment = Pos.CENTER
-        val content = VBox(name, buttons)
-        newFile.scene = Scene(content)
-        newFile.showAndWait()
+        })
     }
 
     @FXML
     private fun onMenuOpen(event: ActionEvent) {
-        IOHandler.getFileChooser("Open", *extensionFilters).showOpenMultipleDialog(Main.stage)?.let { IOHandler.openReconstructions(it) }
+        IOHandler.showOpenFilesDialog("Open", Main.stage, *extensionFilters)?.let { IOHandler.openReconstructions(it) }
     }
 
     @FXML
     fun onMenuSave(event: ActionEvent) {
         getSelectedReconstruction()?.let {
             IOHandler.saveReconstructionAs(it, it.fileLocation
-                    ?: IOHandler.getFileChooser("Save As...", *extensionFilters).showSaveDialog(Main.stage))
+                    ?: IOHandler.showSaveFileDialog("Save As...", Main.stage, it.getSuggestedFileName(), *extensionFilters))
         }
     }
 
     @FXML
     private fun onMenuSaveAs(event: ActionEvent) {
-        getSelectedReconstruction()?.let { IOHandler.saveReconstructionAs(it, IOHandler.getFileChooser("Save As...", *extensionFilters).showSaveDialog(Main.stage)) }
+        getSelectedReconstruction()?.let {
+            IOHandler.saveReconstructionAs(it, IOHandler.showSaveFileDialog("Save As...", Main.stage, it.getSuggestedFileName(), *extensionFilters))
+        }
     }
 
     @FXML
-    private fun onMenuWiki(event: ActionEvent) = Main.instance.openLink("https://github.com/RedstoneTim/Nachbildung/wiki")
+    private fun onMenuSettings(event: ActionEvent) {
+        Options.openSettingsDialog()
+    }
+
+    @FXML
+    private fun onMenuSource(event: ActionEvent) = Main.instance.openLink("https://github.com/RedstoneTim/Nachbildung")
 
     @FXML
     private fun onMenuFeedback(event: ActionEvent) = Main.instance.openLink("https://github.com/RedstoneTim/Nachbildung/issues")
+
+    @FXML
+    private fun onMenuWiki(event: ActionEvent) = Main.instance.openLink("https://github.com/RedstoneTim/Nachbildung/wiki")
 
     @FXML
     private fun onMenuAbout(event: ActionEvent) {

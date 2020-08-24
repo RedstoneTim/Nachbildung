@@ -1,16 +1,16 @@
-package redstonetim.nachbildung.io
+package redstonetim.nachbildung.export
 
-import redstonetim.nachbildung.ReconstructionNode
-import redstonetim.nachbildung.SolveNode
+import redstonetim.nachbildung.gui.ReconstructionNode
+import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.gui.StatisticsTable
 import java.net.URI
 
-object BBCodeConverter : Converter {
+object BBCodeExporter : Exporter {
     private val YOUTUBE_REGEX = Regex("^.*(?:(?:youtu\\.be/|v/|vi/|u/\\w/|embed/)|(?:(?:watch)?\\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*")
 
     override fun processReconstruction(reconstruction: ReconstructionNode): String =
             buildString {
-                append(reconstruction.titleSetting.value).append("\n\n")
+                append(reconstruction.toString()).append("\n\n")
                 if (reconstruction.videoSetting.value.isNotBlank()) {
                     val videoLink = reconstruction.videoSetting.value
                     if (videoLink.isNotBlank()) {
@@ -35,13 +35,13 @@ object BBCodeConverter : Converter {
 
     private fun processSolve(solve: SolveNode, standalone: Boolean): String = buildString {
         if (standalone) {
-            append(solve.reconstruction.titleSetting.value).append("\n\n")
+            append(solve.reconstruction.toString()).append("\n\n")
             val videoLink = solve.reconstruction.videoSetting.value
             if (videoLink.isNotBlank()) {
                 append(processMedia(solve.reconstruction.videoSetting.value)).append("\n")
             }
         } else {
-            append("[SPOILER=\"\nSolve ").append(solve.getSolveNumber()).append("\"]\n")
+            append("[SPOILER=\"Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\"]\n")
         }
         append(solve.getScrambleMoves()).append("\n\n")
         solve.getSteps().forEach {
@@ -71,7 +71,7 @@ object BBCodeConverter : Converter {
         for (statisticsStep in statistics.table.items) {
             append("\n[TR]")
             for (name in listOf(statisticsStep.name, statisticsStep.getTimeAsString(), statisticsStep.getMovesSTMAsString(),
-                    statisticsStep.getSTPSAsString(), statisticsStep.getMovesSTMAsString(), statisticsStep.getETPSAsString())) {
+                    statisticsStep.getSTPSAsString(), statisticsStep.getMovesETMAsString(), statisticsStep.getETPSAsString())) {
                 append("[TD]").append(name).append("[/TD]")
             }
             append("\n[/TR]")

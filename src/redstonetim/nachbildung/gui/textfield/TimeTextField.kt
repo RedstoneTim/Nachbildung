@@ -1,13 +1,17 @@
-package redstonetim.nachbildung.gui
+package redstonetim.nachbildung.gui.textfield
 
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
-import redstonetim.nachbildung.Step
+import redstonetim.nachbildung.puzzle.Step
 
 /**
  * A [TextField] that only accepts time values
  */
-class TimeTextField : TextField() {
+class TimeTextField() : TextField() {
+    constructor(value: Double): this() {
+        textAsTime = value
+    }
+
     private val timeFormatter = TextFormatter<String> { c ->
         if (c.controlNewText.isNotEmpty()) {
             if (!Step.isValidTime(c.controlNewText)) {

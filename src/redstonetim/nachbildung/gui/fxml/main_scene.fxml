@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.Scene?>
+<Scene xmlns="http://javafx.com/javafx/8.0.181" xmlns:fx="http://javafx.com/fxml/1"
+       fx:controller="redstonetim.nachbildung.gui.MainScene">
+    <BorderPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0">
+        <top>
+            <MenuBar BorderPane.alignment="CENTER">
+                <Menu mnemonicParsing="false" text="File">
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuNew" text="New"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuOpen" text="Open..."/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuSave" text="Save"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuSaveAs" text="Save as..."/>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Settings">
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuSettings" text="Change..."/>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuSource" text="Source"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuWiki" text="Wiki"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuFeedback" text="Feedback"/>
+                    <SeparatorMenuItem mnemonicParsing="false"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuAbout" text="About"/>
+                </Menu>
+            </MenuBar>
+        </top>
+        <center>
+            <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"/>
+        </center>
+    </BorderPane>
+</Scene>

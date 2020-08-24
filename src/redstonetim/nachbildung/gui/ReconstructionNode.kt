@@ -1,11 +1,12 @@
-package redstonetim.nachbildung
+package redstonetim.nachbildung.gui
 
+import javafx.beans.binding.Bindings
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.event.ActionEvent
 import javafx.event.Event
 import javafx.fxml.FXML
-import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
-import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -16,51 +17,35 @@ import javafx.stage.Modality
 import javafx.stage.Stage
 import org.json.JSONObject
 import org.json.JSONWriter
-import redstonetim.nachbildung.gui.*
-import redstonetim.nachbildung.io.Converter
+import redstonetim.nachbildung.Main
+import redstonetim.nachbildung.export.Exporter
+import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.Method
 import redstonetim.nachbildung.puzzle.Puzzle
-import redstonetim.nachbildung.settings.Options
-import redstonetim.nachbildung.settings.Setting
-import redstonetim.nachbildung.settings.TimeInputType
+import redstonetim.nachbildung.setting.Options
+import redstonetim.nachbildung.setting.Setting
+import redstonetim.nachbildung.setting.SettingsStage
+import redstonetim.nachbildung.setting.TimeInputType
 import java.io.File
-import java.util.*
-import java.util.stream.Collectors
-import kotlin.math.ceil
-import kotlin.properties.Delegates
 
 // TODO: Statistics tables in FXML (not code)
 class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     companion object {
-        private val fxmlLocation = this::class.java.getResource("reconstruction_node.fxml")
-
-        fun create(name: String): ReconstructionNode {
-            val loader = FXMLLoader()
-            val content: Node = loader.load(fxmlLocation.openStream())
-            val reconstruction: ReconstructionNode = loader.getController()
-            reconstruction.titleSetting.value = name
-            reconstruction.content = content
+        fun create(): ReconstructionNode {
+            // TODO: Have some kind of setting window here
+            val loaded = FXMLHandler.loadReconstruction()
+            val reconstruction = loaded.second
+            reconstruction.content = loaded.first
             reconstruction.update()
             return reconstruction
         }
     }
 
-    init {
-        setOnCloseRequest { showSavePopup(it) }
-    }
-
     // General
+    private val titleProperty = SimpleStringProperty()
     internal var fileLocation: File? = null
-    internal var saved = false
-        set(value) {
-            text = if (value) {
-                titleSetting.value
-            } else {
-                "*${titleSetting.value}"
-            }
-            field = value
-        }
+    internal val savedProperty = SimpleBooleanProperty(false)
 
     // Solves
     @FXML
@@ -84,35 +69,28 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     }
 
     // Settings
-    val titleSetting = object : Setting.StringSetting("Title", "Unnamed") {
-        override fun saveChanges() {
-            super.saveChanges()
-        }
-    }
-    val videoSetting = Setting.StringSetting("Video", "")
-    val puzzleSetting = object : Setting.ChoiceSetting<Puzzle>("Puzzle", Puzzle.getDefaultPuzzle(), Puzzle.values) {
-        override fun saveChanges() {
-            super.saveChanges()
-            for (solve in getSolves())
-                solve.update()
-        }
-    }
-    val methodSetting = Setting.ChoiceSetting("Method", Method.getDefaultMethod(), Method.values)
-    val fpsSetting = Setting.DoubleSetting("FPS", 60.0)
-    val timeInputTypeSetting = object : Setting.ChoiceSetting<TimeInputType>("Time input type",
-            Options.defaultTimeSetting.value, TimeInputType.values().asList()) {
-        override fun saveChanges() {
-            super.saveChanges()
-            for (solve in getSolves())
-                solve.update()
-        }
-    }
-    val autoFillStepsSetting = Setting.BooleanSetting("Auto fill steps", false)
-    val settings = arrayListOf<Setting<*, *>>(titleSetting, videoSetting, puzzleSetting, methodSetting, fpsSetting, timeInputTypeSetting, autoFillStepsSetting)
+    val solverSetting = Setting.StringSetting("Solver", "", "solver")
+    val details = Setting.StringSetting("Details", "Ao5", "details") // TODO: Maybe replace?
+    val competitionSetting = Setting.StringSetting("Competition", "Unofficial", "competition")
+    val videoSetting = Setting.StringSetting("Video link", "", "video_link")
+    val puzzleSetting = Setting.ChoiceSetting("Puzzle", Options.defaultPuzzle.value, Puzzle.values, "puzzle")
+    val methodSetting = Setting.ChoiceSetting("Method", Options.defaultMethod.value, Method.values, "method")
+    val fpsSetting = Setting.DoubleSetting("FPS", Options.defaultFPS.value, "fps")
+    val timeInputTypeSetting = Setting.ChoiceSetting("Time input type",
+            Options.defaultTimeSetting.value, TimeInputType.values().asList(), "time_input_type")
+    val autoFillStepsSetting = Setting.BooleanSetting("Auto fill steps", Options.defaultAutoFillStepsSetting.value, "auto_fill_steps")
+    val settings = arrayListOf<Setting<*, *>>(solverSetting, details, competitionSetting, videoSetting, puzzleSetting, methodSetting, fpsSetting, timeInputTypeSetting, autoFillStepsSetting)
 
     // Statistics
     @FXML
     private lateinit var statisticsBox: VBox
+
+    init {
+        setOnCloseRequest { showSavePopup(it) }
+        titleProperty.bind(solverSetting.concat(" - ").concat(details).concat(" - ").concat(competitionSetting))
+        textProperty().bind(Bindings.`when`(savedProperty).then("").otherwise("*")
+                .concat(titleProperty))
+    }
 
     // TODO: Better performance (don't constantly create new collections)
     fun getStatistics(includeInvisible: Boolean = false): List<ReconstructionStatisticsTable> =
@@ -120,12 +98,12 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     @FXML
     private fun onSettingsButton(event: ActionEvent) {
-        Setting.openSettingsStage(settings, onSave = { update() })
+        SettingsStage.open(settings, onSave = { update() })
     }
 
     @FXML
     private fun onExportReconstructionButton(event: ActionEvent) {
-        Converter.exportReconstruction(this)
+        Exporter.exportReconstruction(this)
     }
 
     @FXML
@@ -133,14 +111,17 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
         addSolve(SolveNode.create(this))
     }
 
+    override fun toString(): String = titleProperty.value
+
+    fun getSuggestedFileName(): String = fileLocation?.nameWithoutExtension ?: toString()
+
     override fun toJSON(jsonWriter: JSONWriter) {
         jsonWriter.`object`()
                 .key("solves").array()
-        // TODO: Save stuff here
         for (solve in getSolves()) {
             solve.toJSON(jsonWriter)
         }
-        jsonWriter.endArray().key("settings").`object`()
+        jsonWriter.endArray().key("setting").`object`()
         for (setting in settings) {
             setting.toJSON(jsonWriter)
         }
@@ -158,7 +139,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
                 }
             }
         }
-        jsonObject.optJSONObject("settings")?.also {
+        jsonObject.optJSONObject("setting")?.also {
             for (setting in settings) {
                 setting.fromJSON(it)
             }
@@ -168,7 +149,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     fun showSavePopup(event: Event): Boolean {
         // TODO: FXML
-        return if (saved) {
+        return if (savedProperty.value) {
             false
         } else {
             val cancelOrSave = Stage()
@@ -202,6 +183,6 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
         for (statisticsTable in getStatistics(true)) {
             statisticsTable.updateFromReconstruction(this)
         }
-        saved = false
+        savedProperty.value = false
     }
 }

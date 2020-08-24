@@ -2,18 +2,19 @@ package redstonetim.nachbildung
 
 import com.sun.deploy.uitoolkit.impl.fx.HostServicesFactory
 import javafx.application.Application
-import javafx.fxml.FXMLLoader
 import javafx.stage.Stage
-import redstonetim.nachbildung.handler.FXMLHandler
+import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.io.IOHandler
+import redstonetim.nachbildung.gui.MainScene
 
+// TODO: Use dialog/alert thing for dialogs/alerts (mainly setting and save or not)
 class Main : Application() {
     companion object {
         const val TITLE = "Nachbildung"
         const val VERSION = "0.1.0"
         val instance: Main = Main()
         lateinit var stage: Stage
-        private set
+            private set
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -30,7 +31,7 @@ class Main : Application() {
         IOHandler.loadFiles()
 
         stage.title = TITLE
-        stage.scene = FXMLLoader.load(javaClass.getResource("main_scene.fxml"))
+        stage.scene = FXMLHandler.loadMainScene()
 
         stage.setOnCloseRequest { event ->
             for (reconstruction in MainScene.instance.getReconstructions()) {
@@ -41,6 +42,10 @@ class Main : Application() {
         }
 
         stage.show()
+    }
+
+    override fun stop() {
+        IOHandler.saveFiles()
     }
 
     fun openLink(link: String) {

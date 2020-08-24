@@ -1,20 +1,18 @@
 package redstonetim.nachbildung.io
 
 import javafx.stage.FileChooser
-import jdk.nashorn.internal.objects.NativeRegExp.compile
+import javafx.stage.Window
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONStringer
 import org.json.JSONTokener
-import redstonetim.nachbildung.MainScene
-import redstonetim.nachbildung.ReconstructionNode
-import redstonetim.nachbildung.Step
+import redstonetim.nachbildung.gui.MainScene
+import redstonetim.nachbildung.gui.ReconstructionNode
 import redstonetim.nachbildung.puzzle.Method
-import redstonetim.nachbildung.settings.Options
+import redstonetim.nachbildung.puzzle.Step
+import redstonetim.nachbildung.setting.Options
 import java.io.File
-import java.io.FileReader
 import java.util.function.Predicate
-import javax.script.ScriptEngineManager
 
 object IOHandler {
     private val methodDirectory = File("methods")
@@ -26,6 +24,15 @@ object IOHandler {
             loadOptions()
         } catch (e: Exception) {
             println("An Exception occurred while reading files")
+            e.printStackTrace()
+        }
+    }
+
+    fun saveFiles() {
+        try {
+            saveOptions()
+        } catch (e: Exception) {
+            println("An Exception occurred while writing files")
             e.printStackTrace()
         }
     }
@@ -68,8 +75,7 @@ object IOHandler {
         }
     }
 
-    // TODO: Move to [Method]?
-    private fun loadOptions() {
+    fun loadOptions() {
         if (optionsFile.isFile) {
             try {
                 Options.fromJSON(JSONObject(JSONTokener(optionsFile.inputStream())))
@@ -82,7 +88,7 @@ object IOHandler {
         }
     }
 
-    private fun saveOptions() {
+    fun saveOptions() {
         val json = JSONStringer()
         Options.toJSON(json)
         optionsFile.writeText(json.toString())
@@ -94,10 +100,10 @@ object IOHandler {
             for (file in files) {
                 try {
                     val json = JSONObject(JSONTokener(file.inputStream()))
-                    val reconstruction = ReconstructionNode.create(file.nameWithoutExtension)
+                    val reconstruction = ReconstructionNode.create()
                     reconstruction.fileLocation = file
                     reconstruction.fromJSON(json)
-                    reconstruction.saved = true
+                    reconstruction.savedProperty.value = true
                     MainScene.instance.addReconstruction(reconstruction)
                     if (!firstFile) {
                         firstFile = true
@@ -118,7 +124,7 @@ object IOHandler {
                 val jsonWriter = JSONStringer()
                 reconstruction.toJSON(jsonWriter)
                 file.writeText(jsonWriter.toString())
-                reconstruction.saved = true
+                reconstruction.savedProperty.value = true
             }
         } catch (e: JSONException) {
             println("A JSONException occurred while saving a reconstruction file:")
@@ -126,13 +132,37 @@ object IOHandler {
         }
     }
 
-    fun getFileChooser(title: String, vararg extensionFilters: FileChooser.ExtensionFilter =
+    private fun createFileChooser(title: String, vararg extensionFilters: FileChooser.ExtensionFilter =
             arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
                     FileChooser.ExtensionFilter("All files", "*.*"))): FileChooser {
         val fileChooser = FileChooser()
         fileChooser.title = title
-        fileChooser.initialDirectory = File(System.getProperty("user.home"))
+        fileChooser.initialDirectory = File(Options.defaultSaveDirectory.value)
         fileChooser.extensionFilters.addAll(*extensionFilters)
         return fileChooser
+    }
+
+    fun showOpenFileDialog(title: String, ownerWindow: Window, vararg extensionFilters: FileChooser.ExtensionFilter =
+            arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
+                    FileChooser.ExtensionFilter("All files", "*.*"))): File? {
+        return createFileChooser(title, *extensionFilters).showOpenDialog(ownerWindow)
+    }
+
+    fun showOpenFilesDialog(title: String, ownerWindow: Window, vararg extensionFilters: FileChooser.ExtensionFilter =
+            arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
+                    FileChooser.ExtensionFilter("All files", "*.*"))): List<File>? {
+        return createFileChooser(title, *extensionFilters).showOpenMultipleDialog(ownerWindow)
+    }
+
+    fun showSaveFileDialog(title: String, ownerWindow: Window, initialFileName: String, vararg extensionFilters: FileChooser.ExtensionFilter =
+            arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
+                    FileChooser.ExtensionFilter("All files", "*.*"))): File? {
+        val fileChooser = createFileChooser(title, *extensionFilters)
+        fileChooser.initialFileName = initialFileName
+        val file = fileChooser.showSaveDialog(ownerWindow)
+        if (file?.parent != null) {
+            Options.defaultSaveDirectory.value = file.parent
+        }
+        return file
     }
 }
