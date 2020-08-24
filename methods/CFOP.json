@@ -15,7 +15,7 @@
 		},
 		{
 			"name": "OLS",
-			"regex": "4th pair|.*LS|.*LP|.*LE|(O|PO|OCE|OCPE|OC(P)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)"
+			"regex": "4th pair|.*LS|.*LP|.*LE|(O|PO|OCE|OCPE|OC\\(P\\)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)"
 		},
 		{
 			"name": "PLL",
