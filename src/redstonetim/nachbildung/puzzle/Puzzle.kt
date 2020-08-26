@@ -7,16 +7,14 @@ import org.json.JSONWriter
 import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.nxnxn.PuzzleNxNxN
-import redstonetim.nachbildung.setting.Options
 
 abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
     companion object : LinkedHashMap<String, Puzzle>() {
-        // TODO: Use options for default puzzle
         val emptyPuzzleVisualization: PuzzleVisualization = object : Group(), PuzzleVisualization {
             override val node: javafx.scene.Node
                 get() = this
 
-            override fun update(scramble: String, solution: String) {}
+            override fun update(scrambleMoves: List<Move>, solution: String) {}
             override fun representsPuzzle(puzzle: Puzzle) = true
         }
         val puzzle3x3x3 = PuzzleNxNxN(3)
@@ -43,19 +41,17 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
     }
 
     override fun fromJSON(jsonObject: JSONObject): Puzzle {
-        return Puzzle[jsonObject.optString("puzzle")] ?: Options.defaultPuzzle.value
+        return Puzzle.getOrDefault(jsonObject.optString("puzzle"), puzzle3x3x3)
     }
 
     open fun getPuzzleVisualization(): PuzzleVisualization = emptyPuzzleVisualization
 
     abstract fun getReconstructionLink(solve: SolveNode): String
 
-    // TODO: Add pauses as moves (like parentheses except they don't count)
     interface MoveManager {
         fun calculateMovecountSTM(moves: List<Move>?): Int = moves?.filter { !it.isRotation && !it.isParenthesis && !it.isPause }?.size
                 ?: 0
 
-        // TODO: Make open parentheses be error
         fun calculateMovecountETM(moves: List<Move>?): Int {
             return if (moves?.isEmpty() == false) {
                 var movecount = 0
@@ -130,7 +126,7 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
     interface PuzzleVisualization {
         val node: Node
 
-        fun update(scramble: String, solution: String)
+        fun update(scrambleMoves: List<Move>, solution: String)
 
         fun representsPuzzle(puzzle: Puzzle): Boolean
     }

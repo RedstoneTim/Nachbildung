@@ -8,24 +8,26 @@ import org.json.JSONStringer
 import org.json.JSONTokener
 import redstonetim.nachbildung.gui.MainScene
 import redstonetim.nachbildung.gui.ReconstructionNode
-import redstonetim.nachbildung.puzzle.Method
-import redstonetim.nachbildung.puzzle.Step
+import redstonetim.nachbildung.method.Method
+import redstonetim.nachbildung.method.MethodSubstep
 import redstonetim.nachbildung.setting.Options
 import java.io.File
-import java.util.function.Predicate
 
 object IOHandler {
     private val methodDirectory = File("methods")
+    private val commonSubstepsDirectory = File("common_method_substeps")
     private val optionsFile = File("options.json")
 
     fun loadFiles() {
-        try {
-            loadMethods()
-            loadOptions()
+        fun tryToExecute(toExecute: () -> Unit) = try {
+            toExecute.invoke()
         } catch (e: Exception) {
             println("An Exception occurred while reading files")
             e.printStackTrace()
         }
+        tryToExecute { loadCommonSubsteps() }
+        tryToExecute { loadMethods() }
+        tryToExecute { loadOptions() }
     }
 
     fun saveFiles() {
@@ -37,7 +39,33 @@ object IOHandler {
         }
     }
 
-    // TODO: Move to [Method]?
+    private fun parseMethodSubstep(json: JSONObject?): MethodSubstep? {
+        return if (json == null) null
+        else {
+            val stepName = json.optString("name")
+            val regex = json.optString("regex")?.let { Regex(it) }
+            if (stepName == null) null
+            else MethodSubstep(stepName, json.optString("identifier").ifBlank { stepName }) { steps, currentIndex ->
+                ((regex != null) && steps[currentIndex].name.matches(regex))
+            }
+        }
+    }
+
+    private fun loadCommonSubsteps() {
+        if (commonSubstepsDirectory.isDirectory) {
+            for (file in commonSubstepsDirectory.listFiles() ?: return) {
+                if (file != null) {
+                    try {
+                        parseMethodSubstep(JSONObject(JSONTokener(file.inputStream())))?.register()
+                    } catch (e: JSONException) {
+                        println("A JSONException occurred while reading a common substep file:")
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
+
     private fun loadMethods() {
         if (methodDirectory.isDirectory) {
             for (file in methodDirectory.listFiles() ?: emptyArray()) {
@@ -47,24 +75,20 @@ object IOHandler {
                         val methodName = json.optString("name")
                         val jsonSteps = json.optJSONArray("steps")
                         if ((methodName?.isEmpty() == false) && (jsonSteps != null)) {
-                            val methodSteps = LinkedHashMap<String, Predicate<Step>>()
+                            val methodSubsteps = arrayListOf<MethodSubstep>()
                             for (i in 0 until jsonSteps.length()) {
-                                val jsonObject = jsonSteps.optJSONObject(i)
-                                val stepName = jsonObject?.optString("name")
-                                val regex = jsonObject?.optString("regex")?.let { Regex(it) }
-                                val kts = jsonObject?.optString("kts")
-                                if (kts != null) {
-                                    //ScriptEngineManager().getEngineByExtension("kts").eval(FileReader(kts))
-                                }
-                                // TODO: Implement JS or any other kind of script
-                                // or maybe not idk
-                                if (stepName != null) {
-                                    methodSteps[stepName] = Predicate {
-                                        ((regex != null) && it.name.matches(regex))
+
+                                val substep = parseMethodSubstep(jsonSteps.optJSONObject(i))
+                                if (substep == null) {
+                                    val substepIdentifier = jsonSteps.optString(i)
+                                    if (substepIdentifier != null) {
+                                        MethodSubstep[substepIdentifier]?.let { methodSubsteps.add(it)  }
                                     }
+                                } else {
+                                    methodSubsteps.add(substep)
                                 }
                             }
-                            Method(methodName, methodSteps).register()
+                            Method(methodName, methodSubsteps).register()
                         }
                     } catch (e: JSONException) {
                         println("A JSONException occurred while reading a method file:")
@@ -140,12 +164,6 @@ object IOHandler {
         fileChooser.initialDirectory = File(Options.defaultSaveDirectory.value)
         fileChooser.extensionFilters.addAll(*extensionFilters)
         return fileChooser
-    }
-
-    fun showOpenFileDialog(title: String, ownerWindow: Window, vararg extensionFilters: FileChooser.ExtensionFilter =
-            arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
-                    FileChooser.ExtensionFilter("All files", "*.*"))): File? {
-        return createFileChooser(title, *extensionFilters).showOpenDialog(ownerWindow)
     }
 
     fun showOpenFilesDialog(title: String, ownerWindow: Window, vararg extensionFilters: FileChooser.ExtensionFilter =

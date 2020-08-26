@@ -10,21 +10,18 @@ import java.util.*
 /**
  * A [TextField] that only accepts [Double] values
  */
-class DoubleTextField() : TextField() {
-    constructor(value: Double): this() {
-        textAsDouble = value
-    }
+class DoubleTextField(value: Double = 0.0) : TextField(value.toString()) {
 
     private val timeFormat = DecimalFormat("#.###", DecimalFormatSymbols.getInstance(Locale.US))
-    private val timeFormatter = TextFormatter<String> { c ->
-        if (c.controlNewText.isNotEmpty()) {
+    private val timeFormatter = TextFormatter<String> {
+        if (it.controlNewText.isNotEmpty()) {
             val parsePosition = ParsePosition(0)
-            val number = timeFormat.parse(c.controlNewText, parsePosition)
-            if (number == null || parsePosition.index < c.controlNewText.length) {
+            val number = timeFormat.parse(it.controlNewText, parsePosition)
+            if (number == null || parsePosition.index < it.controlNewText.length) {
                 return@TextFormatter null
             }
         }
-        c
+        it
     }
 
     init {

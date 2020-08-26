@@ -1,0 +1,4 @@
+{
+    "name": "F2L",
+    "regex": "F2L|EO|(EO)?X*(EO)?(Pseudo)?(Line|Arrow|Cross)(\\+\\d)?|(EO)?22(2|3)|(EO)?Stripe|Daisy|(1st|2nd|3rd|4th) pair|.*LS|.*LP|.*LE|Last pair|(Left|Right) (pair|square|block)"
+}

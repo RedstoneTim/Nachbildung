@@ -1,29 +1,14 @@
 {
 	"name": "Petrus",
 	"steps": [
-		{
-			"name": "F2L",
-			"regex": "EO|(EO)?22(2|3)|(Last|Right) pair|Right (pair|square|block)|.*LS|.*LP|.*LE"
-		},
-		{
-			"name": "LL",
-			"regex": ".*LL|LL.*|AUF|OLLCP|CLLEF|OLL\\(CP\\)"
-		},
+		"F2L",
+		"LL",
 		{
 			"name": "EO223",
 			"regex": "EO|(EO)?22(2|3)"
 		},
-		{
-			"name": "Right block",
-			"regex": "(Last|Right) pair|Right (pair|square|block)|.*LS|.*LP|.*LE"
-		},
-		{
-			"name": "OLS",
-			"regex": "(Last|Right) pair|.*LS|.*LP|.*LE|(O|PO|OCE|OCPE|OC(P)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)"
-		},
-		{
-			"name": "PLL",
-			"regex": "(P|CP|EP)LL|AUF"
-		}
+		"Right block",
+		"RB OLS",
+		"PLL"
 	]
 }

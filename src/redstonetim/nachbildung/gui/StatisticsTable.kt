@@ -6,27 +6,28 @@ import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.layout.VBox
-import redstonetim.nachbildung.puzzle.Step
+import redstonetim.nachbildung.step.StatisticsStep
+import redstonetim.nachbildung.step.StepParser
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.ceil
 
-// TODO: Add statistics tables
+// TODO: Fix penalty counting into TPS (get the average of that as well or if you're lazy just exclude penalty)
 open class StatisticsTable(name: String = "") : VBox() {
-    val table = TableView<Step.StatisticsStep>()
+    val table = TableView<StatisticsStep>()
     var name: String
         get() = label.text
         protected set(value) {
             label.text = value
         }
     private var label: Label = Label()
-    private val nameColumn = TableColumn<Step.StatisticsStep, String>("Step")
-    private val timeColumn = TableColumn<Step.StatisticsStep, String>("Time")
-    private val stmColumn = TableColumn<Step.StatisticsStep, String>("STM")
-    private val stpsColumn = TableColumn<Step.StatisticsStep, String>("STPS")
-    private val etmColumn = TableColumn<Step.StatisticsStep, String>("ETM")
-    private val etpsColumn = TableColumn<Step.StatisticsStep, String>("ETPS")
-    private val steps = FXCollections.observableArrayList<Step.StatisticsStep>()
+    private val nameColumn = TableColumn<StatisticsStep, String>("Step")
+    private val timeColumn = TableColumn<StatisticsStep, String>("Time")
+    private val stmColumn = TableColumn<StatisticsStep, String>("STM")
+    private val stpsColumn = TableColumn<StatisticsStep, String>("STPS")
+    private val etmColumn = TableColumn<StatisticsStep, String>("ETM")
+    private val etpsColumn = TableColumn<StatisticsStep, String>("ETPS")
+    private val steps = FXCollections.observableArrayList<StatisticsStep>()
 
     init {
         nameColumn.cellValueFactory = PropertyValueFactory("name")
@@ -48,7 +49,7 @@ open class StatisticsTable(name: String = "") : VBox() {
         this.children.addAll(label, table)
     }
 
-    open fun update(steps: List<Step.StatisticsStep>) {
+    open fun update(steps: List<StatisticsStep>) {
         this.steps.clear()
         this.steps.addAll(steps)
     }
@@ -68,14 +69,14 @@ abstract class ReconstructionStatisticsTable(name: String = "") : StatisticsTabl
 
 class AverageStatisticsTable : ReconstructionStatisticsTable() {
     override fun update(reconstructionNode: ReconstructionNode): Boolean {
-        val solves = reconstructionNode.getSolves()
+        val solves = reconstructionNode.solves
         val solveCount = solves.size
         return if (solveCount >= 5) {
             val removedSolves = ceil(solveCount * 0.05).toInt()
             name = "Average (${solveCount - (removedSolves * 2)}/$solveCount)"
-            update(Step.StatisticsStep.getMeanSteps(solves.stream()
+            update(StatisticsStep.getMeanSteps(solves.stream()
                     .sorted().skip(removedSolves.toLong()).sorted(Collections.reverseOrder()).skip(removedSolves.toLong())
-                    .map { reconstructionNode.methodSetting.value.getStatisticsSteps(it.getSteps()) }.collect(Collectors.toList()), reconstructionNode.methodSetting.value.getStepNames()))
+                    .map { StepParser.getStatisticsSteps(it.getSteps(), reconstructionNode.methodSetting.value) }.collect(Collectors.toList()), reconstructionNode.methodSetting.value.getStepNames()))
             true
         } else {
             false
@@ -85,11 +86,11 @@ class AverageStatisticsTable : ReconstructionStatisticsTable() {
 
 class MeanStatisticsTable : ReconstructionStatisticsTable() {
     override fun update(reconstructionNode: ReconstructionNode): Boolean {
-        val solves = reconstructionNode.getSolves()
+        val solves = reconstructionNode.solves
         val solveCount = solves.size
         return if (solveCount > 2) {
             name = "Mean ($solveCount/$solveCount)"
-            update(Step.StatisticsStep.getMeanSteps(solves.map { reconstructionNode.methodSetting.value.getStatisticsSteps(it.getSteps()) },
+            update(StatisticsStep.getMeanSteps(solves.map { StepParser.getStatisticsSteps(it.getSteps(), reconstructionNode.methodSetting.value) },
                     reconstructionNode.methodSetting.value.getStepNames()))
             true
         } else {
@@ -100,13 +101,13 @@ class MeanStatisticsTable : ReconstructionStatisticsTable() {
 
 class BestFromFieldsStatisticsTable : ReconstructionStatisticsTable("Best from each field") {
     override fun update(reconstructionNode: ReconstructionNode): Boolean {
-        val solves = reconstructionNode.getSolves()
+        val solves = reconstructionNode.solves
         val solveCount = solves.size
         return if (solveCount > 2) {
-            val steps = solves.map { reconstructionNode.methodSetting.value.getStatisticsSteps(it.getSteps()) }
-            val bestSteps = arrayListOf<Step.StatisticsStep>()
+            val steps = solves.map { StepParser.getStatisticsSteps(it.getSteps(), reconstructionNode.methodSetting.value) }
+            val bestSteps = arrayListOf<StatisticsStep>()
             for (stepName in Collections.singleton("Total") union reconstructionNode.methodSetting.value.getStepNames()) {
-                var bestStep: Step.StatisticsStep? = null
+                var bestStep: StatisticsStep? = null
                 for (stepList in steps) {
                     for (step in stepList) {
                         if ((step.name == stepName) && ((bestStep == null) || (bestStep.time > step.time))) {

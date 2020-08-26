@@ -11,7 +11,6 @@ import redstonetim.nachbildung.gui.textfield.DoubleTextField
 import redstonetim.nachbildung.gui.textfield.IntTextField
 import redstonetim.nachbildung.io.JSONSerializable
 
-// TODO: Use properties
 interface Setting<T, S : Node> : JSONSerializable<Setting<T, S>>, Property<T> {
     val node: S
     val defaultValue: T
@@ -130,8 +129,9 @@ interface Setting<T, S : Node> : JSONSerializable<Setting<T, S>>, Property<T> {
     }
 }
 
-enum class TimeInputType(private val shownName: String) : JSONSerializable<TimeInputType> {
-    TOTAL_TIMES("Total time needed"), TOTAL_FRAMES("Total frames needed"), START_TIME("Time at start"), START_FRAME("Frame at start");
+enum class TimeInputType(private val shownName: String, val total: Boolean, val frames: Boolean) : JSONSerializable<TimeInputType> {
+    TOTAL_TIMES("Total time needed", true, false), TOTAL_FRAMES("Total frames needed", true, true),
+    START_TIME("Time at start", false, false), START_FRAME("Frame at start", false, true);
 
     override fun toJSON(jsonWriter: JSONWriter) {
         jsonWriter.key("time_setting").value(name)
@@ -143,7 +143,7 @@ enum class TimeInputType(private val shownName: String) : JSONSerializable<TimeI
             for (setting in values())
                 if (setting.name == jsonName)
                     return setting
-        return Options.defaultTimeSetting.value
+        return TOTAL_TIMES
     }
 
     override fun toString(): String = shownName

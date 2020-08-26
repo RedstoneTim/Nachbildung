@@ -18,7 +18,7 @@ object MarkdownExporter: Exporter {
         if (reconstruction.videoSetting.value.isNotBlank()) {
             append("[Link to video](").append(reconstruction.videoSetting.value).append(")\n\n")
         }
-        for (solve in reconstruction.getSolves()) {
+        for (solve in reconstruction.solves) {
             append(processSolve(solve, false)).append("\n\n")
         }
 
@@ -44,7 +44,7 @@ object MarkdownExporter: Exporter {
             append("### Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\n\n")
         }
         append("```\n").append(solve.getScrambleMoves()).append("\n\n")
-        solve.getSteps().forEach { append(it.toReconstructionString()).append("\n") }
+        solve.getSteps().forEach { append(it.toString()).append("\n") }
         val reconstructionLink = solve.getReconstructionLink()
         append("```\n\nView at [").append(URI.create(reconstructionLink).host).append("](").append(reconstructionLink).append(")\n\n")
         append(processStatistics(solve.statisticsTable))

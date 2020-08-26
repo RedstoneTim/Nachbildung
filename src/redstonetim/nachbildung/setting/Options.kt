@@ -4,10 +4,9 @@ import org.json.JSONObject
 import org.json.JSONWriter
 import redstonetim.nachbildung.io.IOHandler
 import redstonetim.nachbildung.io.JSONSerializable
-import redstonetim.nachbildung.puzzle.Method
+import redstonetim.nachbildung.method.Method
 import redstonetim.nachbildung.puzzle.Puzzle
 
-// TODO: Add way to change setting and save them
 object Options : JSONSerializable<Options> {
     val solutionSeparator = Setting.StringSetting("Solution separator", ",", "solution_separator")
     val defaultPuzzle = Setting.ChoiceSetting("Default puzzle", Puzzle.puzzle3x3x3, Puzzle.values, "puzzle")

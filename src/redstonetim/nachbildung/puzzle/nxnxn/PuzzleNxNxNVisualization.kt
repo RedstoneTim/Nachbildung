@@ -14,8 +14,8 @@ class PuzzleNxNxNVisualization(val n: Int): Puzzle.PuzzleVisualization {
         node.maxHeight = 300.0
     }
 
-    override fun update(scramble: String, solution: String) {
-        val query = "${this.link.query} $scramble $solution"
+    override fun update(scrambleMoves: List<Puzzle.Move>, solution: String) {
+        val query = "${this.link.query} ${scrambleMoves.joinToString()} $solution"
         if (query != lastQuery) {
             node.engine.load(URI(this.link.scheme, this.link.authority,
                     this.link.path, query, this.link.fragment).toString())

@@ -23,10 +23,10 @@ import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.gui.textfield.TimeTextField
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.Puzzle
-import redstonetim.nachbildung.puzzle.Step
 import redstonetim.nachbildung.setting.Options
+import redstonetim.nachbildung.step.Step
+import redstonetim.nachbildung.step.StepParser
 
-// TODO: Fix issue that all solves have to be reloaded
 class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
     companion object {
         fun create(reconstruction: ReconstructionNode): SolveNode {
@@ -83,7 +83,6 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
 
     @FXML
     private fun onRemoveSolveButton(event: ActionEvent) {
-        // TODO: FXML
         val remove = Stage()
         remove.initModality(Modality.APPLICATION_MODAL)
         val cancelButton = Button("Cancel")
@@ -124,13 +123,14 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
 
     override fun compareTo(other: SolveNode) = getTime().compareTo(other.getTime())
 
-    fun getTime(): Double = getSteps().stream().map { it.time }.reduce(0.0, Double::plus)
+    fun getTime(): Double = solutionSteps?.stream()?.map { it.time }?.reduce(0.0, Double::plus)?:0.0
 
     fun getTimeAsString(): String = Step.timeToString(getTime())
 
-    fun getSolveNumber(): Int = reconstruction.getSolves().indexOf(this) + 1
+    fun getSolveNumber(): Int = reconstruction.solves.indexOf(this) + 1
 
-    fun getScrambleMoves(): String = scrambleTextField.text.trim()
+    private var scrambleMoves: List<Puzzle.Move>? = null
+    fun getScrambleMoves(): List<Puzzle.Move> = scrambleMoves?: emptyList()
 
     fun getSolutionMoves(untilCaret: Boolean): String {
         return (if (untilCaret) solutionTextArea.text.substring(0, solutionTextArea.caretPosition) else solutionTextArea.text)
@@ -145,25 +145,35 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
                 }.filter(String::isNotBlank).reduce { s1, s2 -> "$s1 $s2" }.orElse("")
     }
 
-    private fun getStepsOrNull(): List<Step>? = Step.parseStepsFromText(solutionTextArea.text, timeTextField.textAsTime, reconstruction.methodSetting.value, reconstruction.autoFillStepsSetting.value,
-            scrambleTextField.text, reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value)
+    private var solutionSteps: List<Step>? = null
+
+    private fun getStepsOrNull(): List<Step>? = StepParser.parseStepsFromText(solutionTextArea.text, timeTextField.textAsTime, reconstruction.methodSetting.value, reconstruction.autoFillStepsSetting.value,
+            getScrambleMoves(), reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value)
 
     /**
      * Returns a list of [Step]s parsed from the given solution input.
      */
-    fun getSteps(): List<Step> = getStepsOrNull() ?: emptyList()
+    fun getSteps(): List<Step> = solutionSteps?: emptyList()
 
     fun getReconstructionLink(): String = reconstruction.puzzleSetting.value.getReconstructionLink(this)
 
     fun update(updateReconstruction: Boolean = true) {
-        val steps = getStepsOrNull()
-        // TODO: Make stuff red as well when the scramble sucks
-        solutionTextArea.style = if (steps == null) {
+        solutionSteps = getStepsOrNull()
+        solutionTextArea.style = if (solutionSteps == null) {
+            // TODO: Shared CSS (constant or something like that)
             "-fx-text-box-border: red; -fx-focus-color: red; -fx-control-inner-background: rgba(255,0,0,0.1); -fx-text-fill: #000000;"
         } else {
             ""
         }
-        statisticsTable.update(reconstruction.methodSetting.value.getStatisticsSteps(steps ?: emptyList()))
+        scrambleMoves = reconstruction.puzzleSetting.value.moveManager.parseMoves(scrambleTextField.text)
+        scrambleTextField.style = if (scrambleMoves == null) {
+            // TODO: Shared CSS (constant or something like that)
+            // TODO: Fix CSS
+            "-fx-text-field-border: red; -fx-focus-color: red; -fx-control-inner-background: rgba(255,0,0,0.1); -fx-text-fill: #000000;"
+        } else {
+            ""
+        }
+        statisticsTable.update(StepParser.getStatisticsSteps(getSteps(), reconstruction.methodSetting.value))
         if (!puzzleVisualization.representsPuzzle(reconstruction.puzzleSetting.value)) {
             puzzleVisualization = reconstruction.puzzleSetting.value.getPuzzleVisualization()
             puzzleVisualizationContainer.children.setAll(puzzleVisualization.node)

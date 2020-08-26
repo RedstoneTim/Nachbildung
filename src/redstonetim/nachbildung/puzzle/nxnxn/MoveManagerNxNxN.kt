@@ -4,8 +4,8 @@ import redstonetim.nachbildung.puzzle.Puzzle
 
 class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
     companion object {
-        private val standardMoveRegex = Regex("^([()]|(((\\d+-\\d+|\\d*)[RUFLDB]w|[RUFLDBMESmesxyz]|\\d*[RUFLDB]|(\\d+-\\d+|\\d*)[rufldb])(\\d*)('?)))")
-        private val moveRegex222 = Regex("^([()]|([RUFLDBxyz])(\\d*)('?))")
+        private val standardMoveRegex = Regex("^([().]|(((\\d+-\\d+|\\d*)[RUFLDB]w|[RUFLDBMESmesxyz]|\\d*[RUFLDB]|(\\d+-\\d+|\\d*)[rufldb])(\\d*)('?)))")
+        private val moveRegex222 = Regex("^([().]|([RUFLDBxyz])(\\d*)('?))")
         private val rotations = listOf("x", "y", "z")
         private val cachedMoves = hashMapOf<String, HashMap<Int, MoveNxNxN>>()
 
@@ -45,14 +45,14 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
     private val movePowerNumberGroup = if (n < 3) 3 else 6
     private val movePowerInvertGroup = if (n < 3) 4 else 7
 
+    // TODO: Replace those weird apostrophes some people use with standard ones
     override fun parseMove(singleMoveString: String): Puzzle.Move? {
-        // TODO: No slice moves for 2x2
         val matchResult = moveRegex.matchEntire(singleMoveString)
         if (matchResult != null) {
-            if (matchResult.value == "(") {
-                return Puzzle.Move.openingParenthesisMove
-            } else if (matchResult.value == ")") {
-                return Puzzle.Move.closingParenthesisMove
+            when (matchResult.value){
+                "("-> return Puzzle.Move.openingParenthesisMove
+                ")" -> return Puzzle.Move.closingParenthesisMove
+                "." -> return Puzzle.Move.pauseMove
             }
             val matchGroups = matchResult.groups
             val movePower = (matchGroups[movePowerNumberGroup]?.value?.toIntOrNull()
@@ -96,6 +96,7 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
             val returnedTable = translationMoves.toTypedArray()
             for (rotation in offsetRotations) {
                 var i = -1
+                // TODO: Have x1, y1 and z1 translation tables?
                 val translationTable = when(rotation.moveType) {
                     "y" -> translationTableY
                     "z" -> translationTableZ

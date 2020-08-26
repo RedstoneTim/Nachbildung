@@ -21,19 +21,18 @@ import redstonetim.nachbildung.Main
 import redstonetim.nachbildung.export.Exporter
 import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.io.JSONSerializable
-import redstonetim.nachbildung.puzzle.Method
+import redstonetim.nachbildung.method.Method
 import redstonetim.nachbildung.puzzle.Puzzle
 import redstonetim.nachbildung.setting.Options
 import redstonetim.nachbildung.setting.Setting
 import redstonetim.nachbildung.setting.SettingsStage
 import redstonetim.nachbildung.setting.TimeInputType
 import java.io.File
+import java.util.*
 
-// TODO: Statistics tables in FXML (not code)
 class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     companion object {
         fun create(): ReconstructionNode {
-            // TODO: Have some kind of setting window here
             val loaded = FXMLHandler.loadReconstruction()
             val reconstruction = loaded.second
             reconstruction.content = loaded.first
@@ -49,12 +48,13 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     // Solves
     @FXML
-    private lateinit var solvesBox: VBox // TODO: Add separators between solves?
-
-    // TODO: Better performance (don't constantly create new collections)
-    fun getSolves(): List<SolveNode> = solvesBox.children.mapNotNull { if (it is SolveNode) it else null }
+    private lateinit var solvesBox: VBox
+    // not the nicest way to do this but there isn't really anything better
+    private val solvesInternal = arrayListOf<SolveNode>()
+    val solves: List<SolveNode> = Collections.unmodifiableList(solvesInternal)
 
     fun addSolve(solve: SolveNode): Boolean = if (solvesBox.children.add(solve)) {
+        solvesInternal.add(solve)
         update()
         true
     } else {
@@ -62,6 +62,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     }
 
     fun removeSolve(solve: SolveNode): Boolean = if (solvesBox.children.remove(solve)) {
+        solvesInternal.remove(solve)
         update()
         true
     } else {
@@ -70,7 +71,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     // Settings
     val solverSetting = Setting.StringSetting("Solver", "", "solver")
-    val details = Setting.StringSetting("Details", "Ao5", "details") // TODO: Maybe replace?
+    val details = Setting.StringSetting("Details", "Ao5", "details")
     val competitionSetting = Setting.StringSetting("Competition", "Unofficial", "competition")
     val videoSetting = Setting.StringSetting("Video link", "", "video_link")
     val puzzleSetting = Setting.ChoiceSetting("Puzzle", Options.defaultPuzzle.value, Puzzle.values, "puzzle")
@@ -92,7 +93,6 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
                 .concat(titleProperty))
     }
 
-    // TODO: Better performance (don't constantly create new collections)
     fun getStatistics(includeInvisible: Boolean = false): List<ReconstructionStatisticsTable> =
             statisticsBox.children.mapNotNull { if ((it is ReconstructionStatisticsTable) && (includeInvisible || it.isVisible)) it else null }
 
@@ -118,7 +118,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     override fun toJSON(jsonWriter: JSONWriter) {
         jsonWriter.`object`()
                 .key("solves").array()
-        for (solve in getSolves()) {
+        for (solve in solves) {
             solve.toJSON(jsonWriter)
         }
         jsonWriter.endArray().key("setting").`object`()
@@ -148,7 +148,6 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     }
 
     fun showSavePopup(event: Event): Boolean {
-        // TODO: FXML
         return if (savedProperty.value) {
             false
         } else {
@@ -176,7 +175,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     fun update(updateSolves: Boolean = true) {
         if (updateSolves) {
-            for (solve in getSolves()) {
+            for (solve in solves) {
                 solve.update(false)
             }
         }

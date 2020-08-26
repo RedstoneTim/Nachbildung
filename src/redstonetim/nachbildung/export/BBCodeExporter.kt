@@ -3,6 +3,7 @@ package redstonetim.nachbildung.export
 import redstonetim.nachbildung.gui.ReconstructionNode
 import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.gui.StatisticsTable
+import redstonetim.nachbildung.step.Step
 import java.net.URI
 
 object BBCodeExporter : Exporter {
@@ -17,7 +18,7 @@ object BBCodeExporter : Exporter {
                         append(processMedia(reconstruction.videoSetting.value)).append("\n")
                     }
                 }
-                for (solve in reconstruction.getSolves()) {
+                for (solve in reconstruction.solves) {
                     append(processSolve(solve, false)).append("\n")
                 }
 
@@ -45,13 +46,7 @@ object BBCodeExporter : Exporter {
         }
         append(solve.getScrambleMoves()).append("\n\n")
         solve.getSteps().forEach {
-            val reconstructionString = it.toReconstructionString()
-            val stepStart = reconstructionString.indexOf('/') // TODO: Maybe set using let or something like that?
-            if (stepStart < 0)
-                append(reconstructionString)
-            else
-                append(reconstructionString.substring(0, stepStart)).append("[COLOR=rgb(128, 128, 128)]")
-                        .append(reconstructionString.substring(stepStart)).append("[/COLOR]")
+            append("${it.moves.joinToString(" ")} [COLOR=rgb(128, 128, 128)]${Step.MOVE_NAME_SEPARATOR} ${it.name}[/COLOR]".trim())
             append("\n")
         }
         val reconstructionLink = solve.getReconstructionLink()
