@@ -5,6 +5,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.geometry.Pos
 import javafx.scene.Group
+import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -23,10 +24,12 @@ import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.gui.textfield.TimeTextField
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.Puzzle
-import redstonetim.nachbildung.setting.Options
 import redstonetim.nachbildung.step.Step
 import redstonetim.nachbildung.step.StepParser
 
+/**
+ * A [Node] representing a solve, used both for GUI and the actual data.
+ */
 class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
     companion object {
         fun create(reconstruction: ReconstructionNode): SolveNode {
@@ -42,11 +45,13 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
         }
     }
 
+    // TODO: Maybe use grid pane?
     @FXML
     fun initialize() {
         val changeListener = { _: ObservableValue<out String>, _: String, _: String ->
             update()
         }
+        // TODO: Have delay until processing is done
         scrambleTextField.textProperty().addListener(changeListener)
         timeTextField.textProperty().addListener(changeListener)
         solutionTextArea.textProperty().addListener(changeListener)
@@ -123,23 +128,23 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
 
     override fun compareTo(other: SolveNode) = getTime().compareTo(other.getTime())
 
-    fun getTime(): Double = solutionSteps?.stream()?.map { it.time }?.reduce(0.0, Double::plus)?:0.0
+    fun getTime(): Double = solutionSteps?.stream()?.map { it.time }?.reduce(0.0, Double::plus) ?: 0.0
 
     fun getTimeAsString(): String = Step.timeToString(getTime())
 
     fun getSolveNumber(): Int = reconstruction.solves.indexOf(this) + 1
 
     private var scrambleMoves: List<Puzzle.Move>? = null
-    fun getScrambleMoves(): List<Puzzle.Move> = scrambleMoves?: emptyList()
+    fun getScrambleMoves(): List<Puzzle.Move> = scrambleMoves ?: emptyList()
 
     fun getSolutionMoves(untilCaret: Boolean): String {
         return (if (untilCaret) solutionTextArea.text.substring(0, solutionTextArea.caretPosition) else solutionTextArea.text)
                 .split('\n').stream().map {
-                    val start = it.indexOf(Options.solutionSeparator.value) + 1
+                    val start = it.indexOf(reconstruction.solutionSeparatorSetting.value) + 1
                     if (start == 0) {
                         ""
                     } else {
-                        val end = it.indexOf(Options.solutionSeparator.value, start)
+                        val end = it.indexOf(reconstruction.solutionSeparatorSetting.value, start)
                         it.substring(start, if (end >= 0) end else it.length).trim()
                     }
                 }.filter(String::isNotBlank).reduce { s1, s2 -> "$s1 $s2" }.orElse("")
@@ -148,12 +153,12 @@ class SolveNode : Group(), JSONSerializable<SolveNode>, Comparable<SolveNode> {
     private var solutionSteps: List<Step>? = null
 
     private fun getStepsOrNull(): List<Step>? = StepParser.parseStepsFromText(solutionTextArea.text, timeTextField.textAsTime, reconstruction.methodSetting.value, reconstruction.autoFillStepsSetting.value,
-            getScrambleMoves(), reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value)
+            getScrambleMoves(), reconstruction.puzzleSetting.value, reconstruction.fpsSetting.value, reconstruction.timeInputTypeSetting.value, reconstruction.solutionSeparatorSetting.value)
 
     /**
      * Returns a list of [Step]s parsed from the given solution input.
      */
-    fun getSteps(): List<Step> = solutionSteps?: emptyList()
+    fun getSteps(): List<Step> = solutionSteps ?: emptyList()
 
     fun getReconstructionLink(): String = reconstruction.puzzleSetting.value.getReconstructionLink(this)
 

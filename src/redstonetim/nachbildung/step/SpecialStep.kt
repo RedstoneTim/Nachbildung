@@ -73,7 +73,9 @@ open class SpecialStep(name: String, stepTime: Double, movesSTM: Int, movesETM: 
 
         override fun getTimeAsString(): String = timePenaltyAsString(time)
 
-        override fun toString(): String = "$MOVE_NAME_SEPARATOR ${getTimeAsString()} Penalty"
+        override fun getMovesAsString(): String = ""
+
+        override fun getComment(): String = "$MOVE_NAME_SEPARATOR ${getTimeAsString()} Penalty"
     }
 
     class CommentStep(name: String) : SpecialStep(name, 0.0, 0, 0, emptyList()) {

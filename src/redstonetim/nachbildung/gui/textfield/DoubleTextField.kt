@@ -28,6 +28,9 @@ class DoubleTextField(value: Double = 0.0) : TextField(value.toString()) {
         textFormatter = timeFormatter
     }
 
+    /**
+     * The text in [Double] format.
+     */
     var textAsDouble: Double
         get() = text.toDoubleOrNull() ?: 0.0
         set(value) {

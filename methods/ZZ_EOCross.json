@@ -1,13 +1,21 @@
 {
-	"name": "ZZ (EOCross)",
-	"steps": [
-		"F2L",
-		"LL",
-		{
-			"name": "EOCross",
-			"regex": "EO|(EO)?X*(EO)?(Pseudo)?(Line|Arrow|Cross)(\\+\\d)?|Daisy"
-		},
-		"Pair OLS",
-		"PLL"
-	]
+    "name": "ZZ (EOCross)",
+    "steps": [
+        "F2L",
+        "LL",
+        {
+            "name": "EOCross",
+            "regex": "EO|(EO)?X*(EO)?(Pseudo)?(Line|Arrow|Cross)(\\+\\d)?|Daisy"
+        },
+        "Pair OLS",
+        "PLL"
+    ],
+    "auto_fill_steps": [
+        "EOCross",
+        "1st pair",
+        "2nd pair",
+        "3rd pair",
+        "4th pair",
+        "ZBLL"
+    ]
 }

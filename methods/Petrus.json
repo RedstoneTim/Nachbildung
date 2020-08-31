@@ -1,14 +1,25 @@
 {
 	"name": "Petrus",
 	"steps": [
-		"F2L",
-		"LL",
-		{
-			"name": "EO223",
-			"regex": "EO|(EO)?22(2|3)"
-		},
-		"Right block",
-		"RB OLS",
-		"PLL"
-	]
+        "F2L",
+        "LL",
+        {
+            "name": "223",
+            "regex": "(EO)?22(2|3)"
+        },
+        {
+            "name": "EO",
+            "regex": "EO"
+        },
+        "Right block",
+        "RB OLS",
+        "PLL"
+    ],
+    "auto_fill_steps": [
+        "222",
+        "223",
+        "EO",
+        "Right block",
+        "ZBLL"
+    ]
 }

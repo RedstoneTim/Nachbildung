@@ -14,5 +14,11 @@
 		"Right block",
 		"RB OLS",
 		"PLL"
+	],
+	"auto_fill_steps": [
+		"Left block",
+		"EOStripe",
+		"Right block",
+		"ZBLL"
 	]
 }

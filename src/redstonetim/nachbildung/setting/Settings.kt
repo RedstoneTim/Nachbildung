@@ -11,6 +11,9 @@ import redstonetim.nachbildung.gui.textfield.DoubleTextField
 import redstonetim.nachbildung.gui.textfield.IntTextField
 import redstonetim.nachbildung.io.JSONSerializable
 
+/**
+ * Facilitates display, adjustment and saving of settings.
+ */
 interface Setting<T, S : Node> : JSONSerializable<Setting<T, S>>, Property<T> {
     val node: S
     val defaultValue: T

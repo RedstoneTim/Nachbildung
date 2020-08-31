@@ -9,6 +9,9 @@ import javafx.stage.Stage
 import redstonetim.nachbildung.Main
 import redstonetim.nachbildung.gui.fxml.FXMLHandler
 
+/**
+ * Controller for the settings adjustment popup window.
+ */
 class SettingsStage {
     companion object {
         fun open(settings: Collection<Setting<*, *>>, onSave: (ActionEvent) -> Unit = {}, onCancel: (ActionEvent) -> Unit = {}) {

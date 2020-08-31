@@ -5,29 +5,30 @@ import redstonetim.nachbildung.gui.ReconstructionNode
 import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.gui.StatisticsTable
 import java.net.URI
-import kotlin.math.max
 
 /**
- * Exports a reconstruction or solve to the Markdown format.
+ * Exports a reconstruction or solve to a plain text format, without any markup.
  */
-object MarkdownExporter : Exporter {
-    override val fileEndings: Array<FileChooser.ExtensionFilter> = arrayOf(FileChooser.ExtensionFilter("Markdown files", "*.md", "*.markdown"),
+object TxtExporter : Exporter {
+    const val INDENT = "     "
+    override val fileEndings: Array<FileChooser.ExtensionFilter> = arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
             FileChooser.ExtensionFilter("All files", "*.*"))
     private val TABLE_REGEX = Regex("[^|]")
 
     override fun processReconstruction(reconstruction: ReconstructionNode): String =
             buildString {
-                append("# ").append(toString(reconstruction)).append("\n\n")
+                val title = reconstruction.toString()
+                append(title).append("\n\n").append("-".repeat(title.length)).append("\n\n")
                 if (reconstruction.videoSetting.value.isNotBlank()) {
-                    append("[Link to video](").append(reconstruction.videoSetting.value).append(")\n\n")
+                    append("Video: ").append(reconstruction.videoSetting.value).append("\n\n")
                 }
                 for (solve in reconstruction.solves) {
-                    append(processSolve(solve, false)).append("\n\n")
+                    append(processSolve(solve, false)).append("\n\n\n")
                 }
 
                 val statisticsList = reconstruction.getStatistics()
                 if (statisticsList.isNotEmpty()) {
-                    append("---\n\n## Statistics\n\n")
+                    append("\n\nStatistics\n\n")
 
                     for (statistics in statisticsList) {
                         append(processStatistics(statistics)).append("\n\n")
@@ -39,31 +40,32 @@ object MarkdownExporter : Exporter {
 
     private fun processSolve(solve: SolveNode, standalone: Boolean): String = buildString {
         if (standalone) {
-            append("# ").append(toString(solve.reconstruction)).append("\n\n")
+            val title = solve.toString()
+            append(title).append("\n\n").append("-".repeat(title.length)).append("\n\n")
             if (solve.reconstruction.videoSetting.value.isNotBlank()) {
-                append("[Link to video](").append(solve.reconstruction.videoSetting.value).append(")\n\n")
+                append("Video: ").append(solve.reconstruction.videoSetting.value).append("\n\n")
             }
         } else {
-            append("### Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\n\n")
+            append("Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\n\n")
         }
-        append("```\n").append(solve.getScrambleMoves().joinToString(" ")).append("\n\n")
-        solve.getSteps().forEach { append(it.toString()).append("\n") }
+        append(INDENT).append(solve.getScrambleMoves().joinToString(" ")).append("\n\n")
+        solve.getSteps().forEach { append(INDENT).append(it.toString()).append("\n") }
         val reconstructionLink = solve.getReconstructionLink()
-        append("```\n\nView at [").append(URI.create(reconstructionLink).host).append("](").append(reconstructionLink).append(")\n\n")
+        append("\n\n").append(URI.create(reconstructionLink).host).append(": ").append(reconstructionLink).append("\n\n")
         append(processStatistics(solve.statisticsTable))
     }
 
     private fun processStatistics(statistics: StatisticsTable): String = buildString {
         val label = statistics.name
         if (label.isNotEmpty()) {
-            append("### ").append(label).append("\n\n")
+            append(label).append("\n\n")
         }
         val top = statistics.table.columns.map { it.text }
         val sizes = top.map { it.length }.toMutableList()
         val table = statistics.table.items.map {
             val list = listOf(it.name, it.getTimeAsString(), it.getMovesSTMAsString(),
                     it.getSTPSAsString(), it.getMovesETMAsString(), it.getETPSAsString())
-            list.forEachIndexed { index, s -> sizes[index] = max(sizes[index], s.length) }
+            list.forEachIndexed { index, s -> sizes[index] = kotlin.math.max(sizes[index], s.length) }
             list
         }.map {
             it.mapIndexed { index, s -> " $s ${" ".repeat(sizes[index] - s.length)} " }
@@ -75,8 +77,5 @@ object MarkdownExporter : Exporter {
         }
     }
 
-    private fun toString(reconstruction: ReconstructionNode): String =
-            "**${reconstruction.solverSetting.value}** - ${reconstruction.detailsSetting.value} - ${reconstruction.competitionSetting.value}"
-
-    override fun toString(): String = "Markdown"
+    override fun toString(): String = "Plain text"
 }

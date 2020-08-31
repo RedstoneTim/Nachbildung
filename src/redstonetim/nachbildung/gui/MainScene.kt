@@ -2,18 +2,18 @@ package redstonetim.nachbildung.gui
 
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
-import javafx.scene.Scene
-import javafx.scene.control.Label
 import javafx.scene.control.TabPane
-import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import javafx.stage.Modality
-import javafx.stage.Stage
 import redstonetim.nachbildung.Main
+import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.io.IOHandler
 import redstonetim.nachbildung.setting.Options
 import redstonetim.nachbildung.setting.SettingsStage
 
+/**
+ * Controller for the main window.
+ */
 class MainScene {
     companion object {
         private val extensionFilters = arrayOf(FileChooser.ExtensionFilter("JSON files", "*.json"),
@@ -25,6 +25,7 @@ class MainScene {
     @FXML
     fun initialize() {
         instance = this
+        IOHandler.openOldReconstructions()
     }
 
     @FXML
@@ -93,10 +94,9 @@ class MainScene {
     @FXML
     private fun onMenuAbout(event: ActionEvent) {
         // TODO: FXML
-        val aboutStage = Stage()
-        aboutStage.initModality(Modality.APPLICATION_MODAL)
-        aboutStage.title = Main.TITLE
-        aboutStage.scene = Scene(VBox(Label("${Main.TITLE} ${Main.VERSION}"), Label("RedstoneTim")))
-        aboutStage.showAndWait()
+        val stage = FXMLHandler.loadAboutStage()
+        stage.initModality(Modality.APPLICATION_MODAL)
+        stage.title = Main.TITLE
+        stage.showAndWait()
     }
 }

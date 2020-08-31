@@ -7,6 +7,7 @@ import javafx.event.ActionEvent
 import javafx.event.Event
 import javafx.fxml.FXML
 import javafx.geometry.Pos
+import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -30,6 +31,9 @@ import redstonetim.nachbildung.setting.TimeInputType
 import java.io.File
 import java.util.*
 
+/**
+ * A [Node] representing a reconstruction, used both for GUI and the actual data.
+ */
 class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     companion object {
         fun create(): ReconstructionNode {
@@ -49,6 +53,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     // Solves
     @FXML
     private lateinit var solvesBox: VBox
+
     // not the nicest way to do this but there isn't really anything better
     private val solvesInternal = arrayListOf<SolveNode>()
     val solves: List<SolveNode> = Collections.unmodifiableList(solvesInternal)
@@ -71,7 +76,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     // Settings
     val solverSetting = Setting.StringSetting("Solver", "", "solver")
-    val details = Setting.StringSetting("Details", "Ao5", "details")
+    val detailsSetting = Setting.StringSetting("Details", "Ao5", "details")
     val competitionSetting = Setting.StringSetting("Competition", "Unofficial", "competition")
     val videoSetting = Setting.StringSetting("Video link", "", "video_link")
     val puzzleSetting = Setting.ChoiceSetting("Puzzle", Options.defaultPuzzle.value, Puzzle.values, "puzzle")
@@ -79,8 +84,10 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
     val fpsSetting = Setting.DoubleSetting("FPS", Options.defaultFPS.value, "fps")
     val timeInputTypeSetting = Setting.ChoiceSetting("Time input type",
             Options.defaultTimeSetting.value, TimeInputType.values().asList(), "time_input_type")
-    val autoFillStepsSetting = Setting.BooleanSetting("Auto fill steps", Options.defaultAutoFillStepsSetting.value, "auto_fill_steps")
-    val settings = arrayListOf<Setting<*, *>>(solverSetting, details, competitionSetting, videoSetting, puzzleSetting, methodSetting, fpsSetting, timeInputTypeSetting, autoFillStepsSetting)
+    val solutionSeparatorSetting = Setting.StringSetting("Solution separator", Options.defaultSolutonSeparator.value, "solution_separator")
+    val autoFillStepsSetting = Setting.BooleanSetting("Auto fill steps (W.I.P.)", Options.defaultAutoFillStepsSetting.value, "auto_fill_steps")
+    val settings = arrayListOf<Setting<*, *>>(solverSetting, detailsSetting, competitionSetting, videoSetting, puzzleSetting,
+            methodSetting, fpsSetting, timeInputTypeSetting, solutionSeparatorSetting, autoFillStepsSetting)
 
     // Statistics
     @FXML
@@ -88,7 +95,7 @@ class ReconstructionNode : Tab(), JSONSerializable<ReconstructionNode> {
 
     init {
         setOnCloseRequest { showSavePopup(it) }
-        titleProperty.bind(solverSetting.concat(" - ").concat(details).concat(" - ").concat(competitionSetting))
+        titleProperty.bind(solverSetting.concat(" - ").concat(detailsSetting).concat(" - ").concat(competitionSetting))
         textProperty().bind(Bindings.`when`(savedProperty).then("").otherwise("*")
                 .concat(titleProperty))
     }

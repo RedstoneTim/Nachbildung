@@ -13,10 +13,14 @@ import redstonetim.nachbildung.method.MethodSubstep
 import redstonetim.nachbildung.setting.Options
 import java.io.File
 
+/**
+ * Object for everything related to loading and saving files.
+ */
 object IOHandler {
     private val methodDirectory = File("methods")
     private val commonSubstepsDirectory = File("common_method_substeps")
     private val optionsFile = File("options.json")
+    internal var reconstructionsToOpen = arrayListOf<File>()
 
     fun loadFiles() {
         fun tryToExecute(toExecute: () -> Unit) = try {
@@ -37,6 +41,10 @@ object IOHandler {
             println("An Exception occurred while writing files")
             e.printStackTrace()
         }
+    }
+
+    fun openOldReconstructions() {
+        openReconstructions(reconstructionsToOpen)
     }
 
     private fun parseMethodSubstep(json: JSONObject?): MethodSubstep? {
@@ -77,18 +85,18 @@ object IOHandler {
                         if ((methodName?.isEmpty() == false) && (jsonSteps != null)) {
                             val methodSubsteps = arrayListOf<MethodSubstep>()
                             for (i in 0 until jsonSteps.length()) {
-
                                 val substep = parseMethodSubstep(jsonSteps.optJSONObject(i))
                                 if (substep == null) {
                                     val substepIdentifier = jsonSteps.optString(i)
                                     if (substepIdentifier != null) {
-                                        MethodSubstep[substepIdentifier]?.let { methodSubsteps.add(it)  }
+                                        MethodSubstep[substepIdentifier]?.let { methodSubsteps.add(it) }
                                     }
                                 } else {
                                     methodSubsteps.add(substep)
                                 }
                             }
-                            Method(methodName, methodSubsteps).register()
+                            Method(methodName, json.optJSONArray("auto_fill_steps")?.filterIsInstance<String>()
+                                    ?: emptyList(), methodSubsteps).register()
                         }
                     } catch (e: JSONException) {
                         println("A JSONException occurred while reading a method file:")
@@ -169,7 +177,12 @@ object IOHandler {
     fun showOpenFilesDialog(title: String, ownerWindow: Window, vararg extensionFilters: FileChooser.ExtensionFilter =
             arrayOf(FileChooser.ExtensionFilter("Text files", "*.txt"),
                     FileChooser.ExtensionFilter("All files", "*.*"))): List<File>? {
-        return createFileChooser(title, *extensionFilters).showOpenMultipleDialog(ownerWindow)
+        val files = createFileChooser(title, *extensionFilters).showOpenMultipleDialog(ownerWindow)
+        val file = files?.getOrNull(0)
+        if (file?.parent != null) {
+            Options.defaultSaveDirectory.value = file.parent
+        }
+        return files
     }
 
     fun showSaveFileDialog(title: String, ownerWindow: Window, initialFileName: String, vararg extensionFilters: FileChooser.ExtensionFilter =

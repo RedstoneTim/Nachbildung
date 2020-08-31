@@ -23,15 +23,23 @@
 		},
 		{
 			"name": "CMLL",
-			"regex": "C*LL"
-		},
-		{
-			"name": "EOLRb",
-			"regex": "EO|(EO)?LR|4(a|b)"
-		},
-		{
-			"name": "EP",
-			"regex": "EP|4c"
-		}
-	]
+            "regex": "C*LL"
+        },
+        {
+            "name": "EOLRb",
+            "regex": "EO|(EO)?LR((-)?)b?|4(a|b)"
+        },
+        {
+            "name": "EP",
+            "regex": "EP|4c"
+        }
+    ],
+    "auto_fill_steps": [
+        "FB",
+        "SS",
+        "SP",
+        "CMLL",
+        "EOLRb",
+        "EP"
+    ]
 }

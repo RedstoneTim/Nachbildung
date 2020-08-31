@@ -2,8 +2,11 @@ package redstonetim.nachbildung.method
 
 import redstonetim.nachbildung.step.Step
 
+/**
+ * Represents a substep of a [Method], used for statistics.
+ */
 open class MethodSubstep(val name: String, val identifier: String = name, val countStep: (List<Step>, Int) -> Boolean) {
-    companion object: HashMap<String, MethodSubstep>() {
+    companion object : HashMap<String, MethodSubstep>() {
         private val LAST_PAIR_REGEX = Regex(".*LS|.*LP|.*LE")
         private val OLS_REGEX = Regex("$LAST_PAIR_REGEX|(O|PO|OCE|OCPE|OC\\(P\\)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)")
         private val LEFT_BLOCK_REGEX = Regex("Left (pair|square|block)")

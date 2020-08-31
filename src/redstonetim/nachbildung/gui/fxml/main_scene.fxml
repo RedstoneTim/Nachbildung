@@ -18,11 +18,11 @@
                     <MenuItem mnemonicParsing="false" onAction="#onMenuSettings" text="Change..."/>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
-                    <MenuItem mnemonicParsing="false" onAction="#onMenuSource" text="Source"/>
-                    <MenuItem mnemonicParsing="false" onAction="#onMenuWiki" text="Wiki"/>
-                    <MenuItem mnemonicParsing="false" onAction="#onMenuFeedback" text="Feedback"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuSource" text="Source..."/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuWiki" text="Wiki..."/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuFeedback" text="Feedback..."/>
                     <SeparatorMenuItem mnemonicParsing="false"/>
-                    <MenuItem mnemonicParsing="false" onAction="#onMenuAbout" text="About"/>
+                    <MenuItem mnemonicParsing="false" onAction="#onMenuAbout" text="About..."/>
                 </Menu>
             </MenuBar>
         </top>

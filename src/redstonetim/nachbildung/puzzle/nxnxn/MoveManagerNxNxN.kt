@@ -2,6 +2,9 @@ package redstonetim.nachbildung.puzzle.nxnxn
 
 import redstonetim.nachbildung.puzzle.Puzzle
 
+/**
+ * [Puzzle.MoveManager] for all puzzles of the type [PuzzleNxNxN].
+ */
 class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
     companion object {
         private val standardMoveRegex = Regex("^([().]|(((\\d+-\\d+|\\d*)[RUFLDB]w|[RUFLDBMESmesxyz]|\\d*[RUFLDB]|(\\d+-\\d+|\\d*)[rufldb])(\\d*)('?)))")
@@ -32,7 +35,7 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
         )
         private val translationMoveStrings = arrayListOf("R", "L", "U", "D", "F", "B", "M", "E", "S", "x", "y", "z")
         private val translationMoves = translationMoveStrings.map { moveFrom(it, 1) }
-        private val cachedTables = hashMapOf("x" to translationTableX, "y" to translationTableY, "z" to translationTableZ)
+        private val cachedTables = hashMapOf("x1" to translationTableX, "y1" to translationTableY, "z1" to translationTableZ)
 
         fun moveFrom(moveType: String, movePower: Int): Puzzle.Move {
             return cachedMoves[moveType]?.get(movePower)
@@ -45,12 +48,11 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
     private val movePowerNumberGroup = if (n < 3) 3 else 6
     private val movePowerInvertGroup = if (n < 3) 4 else 7
 
-    // TODO: Replace those weird apostrophes some people use with standard ones
     override fun parseMove(singleMoveString: String): Puzzle.Move? {
-        val matchResult = moveRegex.matchEntire(singleMoveString)
+        val matchResult = moveRegex.matchEntire(singleMoveString.replace('’', '\''))
         if (matchResult != null) {
-            when (matchResult.value){
-                "("-> return Puzzle.Move.openingParenthesisMove
+            when (matchResult.value) {
+                "(" -> return Puzzle.Move.openingParenthesisMove
                 ")" -> return Puzzle.Move.closingParenthesisMove
                 "." -> return Puzzle.Move.pauseMove
             }
@@ -67,7 +69,7 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
 
     override fun parseMoves(moveString: String): List<Puzzle.Move>? {
         val moveList = arrayListOf<Puzzle.Move>()
-        var moves = moveString.trim()
+        var moves = moveString.replace('’', '\'').trim()
         var matchResult = moveRegex.find(moves)
         var openParenthesis = false
         while (matchResult != null) {
@@ -85,8 +87,6 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
         return if (moves.isBlank() && !openParenthesis) moveList else null
     }
 
-    // TODO: Make sure all method calls to this only use rotations, specifically the one in the parseSteps method of [Steps]
-    // TODO: Test slice moves (they seem to be a bit sketchy, you know)
     override fun offsetMoves(moves: List<Puzzle.Move>, offsetRotations: List<Puzzle.Move>): List<Puzzle.Move> {
         if (offsetRotations.isEmpty()) return moves
 
@@ -96,8 +96,7 @@ class MoveManagerNxNxN(val n: Int) : Puzzle.MoveManager {
             val returnedTable = translationMoves.toTypedArray()
             for (rotation in offsetRotations) {
                 var i = -1
-                // TODO: Have x1, y1 and z1 translation tables?
-                val translationTable = when(rotation.moveType) {
+                val translationTable = when (rotation.moveType) {
                     "y" -> translationTableY
                     "z" -> translationTableZ
                     else -> translationTableX

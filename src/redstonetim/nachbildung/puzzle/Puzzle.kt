@@ -8,6 +8,9 @@ import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.io.JSONSerializable
 import redstonetim.nachbildung.puzzle.nxnxn.PuzzleNxNxN
 
+/**
+ * Class for representing a puzzle (e.g. Rubik's Cube, Skewb).
+ */
 abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
     companion object : LinkedHashMap<String, Puzzle>() {
         val emptyPuzzleVisualization: PuzzleVisualization = object : Group(), PuzzleVisualization {
@@ -46,8 +49,14 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
 
     open fun getPuzzleVisualization(): PuzzleVisualization = emptyPuzzleVisualization
 
+    /**
+     * Returns the link to a website with a replay of the given solve.
+     */
     abstract fun getReconstructionLink(solve: SolveNode): String
 
+    /**
+     * Class for parsing, offsetting and creating moves of a given [Puzzle].
+     */
     interface MoveManager {
         fun calculateMovecountSTM(moves: List<Move>?): Int = moves?.filter { !it.isRotation && !it.isParenthesis && !it.isPause }?.size
                 ?: 0
@@ -81,6 +90,9 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
         fun offsetMoves(moves: List<Move>, offsetRotations: List<Move>): List<Move>
     }
 
+    /**
+     * A move or turn that can be applied to a [Puzzle] (may not have any effect).
+     */
     interface Move {
         companion object {
             val openingParenthesisMove = object : Move {
@@ -97,6 +109,10 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
                 override val isParenthesis = true
                 override fun toString(): String = moveType
             }
+
+            /**
+             * A move that represents a pause.
+             */
             val pauseMove = object : Move {
                 override val moveType = "."
                 override val movePower = 0
@@ -123,6 +139,9 @@ abstract class Puzzle(val name: String) : JSONSerializable<Puzzle> {
             get() = false
     }
 
+    /**
+     * The visualization of a [Puzzle] using the given moves. It is shown to the right of the move input textfield.
+     */
     interface PuzzleVisualization {
         val node: Node
 

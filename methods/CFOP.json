@@ -9,5 +9,14 @@
 		},
 		"Pair OLS",
 		"PLL"
+	],
+	"auto_fill_steps": [
+		"Cross",
+		"1st pair",
+		"2nd pair",
+		"3rd pair",
+		"4th pair",
+		"OLL",
+		"PLL"
 	]
 }

@@ -3,15 +3,17 @@ package redstonetim.nachbildung.export
 import redstonetim.nachbildung.gui.ReconstructionNode
 import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.gui.StatisticsTable
-import redstonetim.nachbildung.step.Step
 import java.net.URI
 
+/**
+ * Exports a reconstruction or solve to the BBCode format.
+ */
 object BBCodeExporter : Exporter {
     private val YOUTUBE_REGEX = Regex("^.*(?:(?:youtu\\.be/|v/|vi/|u/\\w/|embed/)|(?:(?:watch)?\\?v(?:i)?=|&v(?:i)?=))([^#&?]*).*")
 
     override fun processReconstruction(reconstruction: ReconstructionNode): String =
             buildString {
-                append(reconstruction.toString()).append("\n\n")
+                append(getReconstructionTitle(reconstruction)).append("\n\n")
                 if (reconstruction.videoSetting.value.isNotBlank()) {
                     val videoLink = reconstruction.videoSetting.value
                     if (videoLink.isNotBlank()) {
@@ -36,7 +38,7 @@ object BBCodeExporter : Exporter {
 
     private fun processSolve(solve: SolveNode, standalone: Boolean): String = buildString {
         if (standalone) {
-            append(solve.reconstruction.toString()).append("\n\n")
+            append(getReconstructionTitle(solve.reconstruction)).append("\n\n")
             val videoLink = solve.reconstruction.videoSetting.value
             if (videoLink.isNotBlank()) {
                 append(processMedia(solve.reconstruction.videoSetting.value)).append("\n")
@@ -44,10 +46,9 @@ object BBCodeExporter : Exporter {
         } else {
             append("[SPOILER=\"Solve ").append(solve.getSolveNumber()).append(": ").append(solve.getTimeAsString()).append("\"]\n")
         }
-        append(solve.getScrambleMoves()).append("\n\n")
+        append(solve.getScrambleMoves().joinToString(" ")).append("\n\n")
         solve.getSteps().forEach {
-            append("${it.moves.joinToString(" ")} [COLOR=rgb(128, 128, 128)]${Step.MOVE_NAME_SEPARATOR} ${it.name}[/COLOR]".trim())
-            append("\n")
+            append("${it.getMovesAsString()} [COLOR=rgb(128, 128, 128)]${it.getComment()}[/COLOR]\n")
         }
         val reconstructionLink = solve.getReconstructionLink()
         append("\n[COLOR=rgb(128, 128, 128)]View at [/COLOR][URL='").append(reconstructionLink).append("']")
@@ -59,7 +60,7 @@ object BBCodeExporter : Exporter {
     private fun processStatistics(statistics: StatisticsTable): String = buildString {
         val label = statistics.name
         append("[SPOILER=\"").append(if (label.isEmpty()) "Statistics" else label).append("\"]\n[TABLE]\n[TR]\n")
-        for(statisticsStep in statistics.table.columns) {
+        for (statisticsStep in statistics.table.columns) {
             append("[TD]").append(statisticsStep.text).append("[/TD]")
         }
         append("\n[/TR]")
@@ -82,6 +83,9 @@ object BBCodeExporter : Exporter {
             "[SPOILER=\"Video\"][MEDIA=youtube]${youtube.groupValues[1]}[/MEDIA][/SPOILER]"
         }
     }
+
+    private fun getReconstructionTitle(reconstruction: ReconstructionNode): String =
+            "[B]${reconstruction.solverSetting.value}[/B] - ${reconstruction.detailsSetting.value} - ${reconstruction.competitionSetting.value}"
 
     override fun toString(): String = "BBCode"
 }

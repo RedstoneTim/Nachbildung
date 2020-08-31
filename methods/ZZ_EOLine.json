@@ -1,15 +1,23 @@
 {
 	"name": "ZZ (EOLine)",
 	"steps": [
-		"F2L",
-		"LL",
-		{
-			"name": "EOLine",
-			"regex": "EO|(EO)?X*(EO)?(Pseudo)?Line(\\+\\d)?|Daisy"
-		},
-		"EOLine Left block",
-		"EOLine Right block",
-		"EOLine OLS",
-		"PLL"
-	]
+        "F2L",
+        "LL",
+        {
+            "name": "EOLine",
+            "regex": "EO|(EO)?X*(EO)?(Pseudo)?Line(\\+\\d)?|Daisy"
+        },
+        "EOLine Left block",
+        "EOLine Right block",
+        "EOLine OLS",
+        "PLL"
+    ],
+    "auto_fill_steps": [
+        "EOLine",
+        "Left square",
+        "Left pair",
+        "Right square",
+        "Right pair",
+        "ZBLL"
+    ]
 }

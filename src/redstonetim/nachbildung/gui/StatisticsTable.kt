@@ -7,12 +7,15 @@ import javafx.scene.control.TableView
 import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.layout.VBox
 import redstonetim.nachbildung.step.StatisticsStep
+import redstonetim.nachbildung.step.Step
 import redstonetim.nachbildung.step.StepParser
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.ceil
 
-// TODO: Fix penalty counting into TPS (get the average of that as well or if you're lazy just exclude penalty)
+/**
+ * A table for representing statistics of the solve/reconstruction.
+ */
 open class StatisticsTable(name: String = "") : VBox() {
     val table = TableView<StatisticsStep>()
     var name: String
@@ -106,7 +109,7 @@ class BestFromFieldsStatisticsTable : ReconstructionStatisticsTable("Best from e
         return if (solveCount > 2) {
             val steps = solves.map { StepParser.getStatisticsSteps(it.getSteps(), reconstructionNode.methodSetting.value) }
             val bestSteps = arrayListOf<StatisticsStep>()
-            for (stepName in Collections.singleton("Total") union reconstructionNode.methodSetting.value.getStepNames()) {
+            for (stepName in Collections.singleton(Step.TOTAL) union reconstructionNode.methodSetting.value.getStepNames()) {
                 var bestStep: StatisticsStep? = null
                 for (stepList in steps) {
                     for (step in stepList) {

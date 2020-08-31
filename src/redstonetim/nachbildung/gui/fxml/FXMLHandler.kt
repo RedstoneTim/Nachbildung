@@ -8,11 +8,15 @@ import redstonetim.nachbildung.gui.ReconstructionNode
 import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.setting.SettingsStage
 
+/**
+ * Handles loading for FXML files.
+ */
 object FXMLHandler {
     private val mainScene = javaClass.getResource("main_scene.fxml")
     private val reconstructionNode = javaClass.getResource("reconstruction_node.fxml")
     private val solveNode = javaClass.getResource("solve_node.fxml")
     private val settingsStage = javaClass.getResource("settings_stage.fxml")
+    private val aboutStage = javaClass.getResource("about_stage.fxml")
 
     internal fun loadMainScene(): Scene {
         return FXMLLoader.load(mainScene)
@@ -33,4 +37,6 @@ object FXMLHandler {
         loader.load<Stage>(settingsStage.openStream())
         return loader.getController<SettingsStage>()
     }
+
+    internal fun loadAboutStage(): Stage = FXMLLoader.load(aboutStage)
 }

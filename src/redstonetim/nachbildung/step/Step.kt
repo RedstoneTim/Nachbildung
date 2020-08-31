@@ -9,17 +9,13 @@ import kotlin.math.floor
 import kotlin.math.round
 
 /**
- * This class represents steps of solving the puzzle.
- * @param name The name of the step.
- * @param time The time in milliseconds needed to solve this step.
- * @param movesSTM The moves performed in this step in Slice Turn Metric.
- * @param movesETM The moves performed in this step in Execution Turn Metric.
+ * This class represents steps of solving a [Puzzle], which are used for organizing the input and serving as the data for statistics.
  */
 open class Step(val name: String, stepTime: Double, val movesSTM: Int, val movesETM: Int, val moves: List<Puzzle.Move>, vararg val statsToAddTo: String) {
     companion object {
         const val TOTAL = "Total"
         const val MOVE_NAME_SEPARATOR = "//"
-        private val TIME_REGEX = Regex("(((\\d*):)?([0-5]?\\d):)?([0-5]?\\d)((\\.\\d{0,2})\\d*)?")
+        private val TIME_REGEX = Regex("(((\\d*):)?([0-5]?\\d):)?(\\d+)((\\.\\d{0,2})\\d*)?")
         private val DNF_REGEX = Regex("^D(NF?)?\$")
         private val standardDecimalFormat = DecimalFormat("0.00", DecimalFormatSymbols(Locale.US))
         private val bigDecimalFormat = DecimalFormat("00.00", DecimalFormatSymbols(Locale.US))
@@ -63,8 +59,8 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
             : this(name, time, puzzle.moveManager.calculateMovecountSTM(moves), puzzle.moveManager.calculateMovecountETM(moves), moves, *statsToAddTo)
 
     val time = round(stepTime * 100.0) / 100.0 // round time so we don't end up with incorrect statistics
-    private val stps: Double = if (time <= 0) 0.0 else round((movesSTM.toDouble() / time) * 100.0) / 100.0
-    private val etps: Double = if (time <= 0) 0.0 else round((movesETM.toDouble() / time) * 100.0) / 100.0
+    open val stps: Double = if (time <= 0) 0.0 else round((movesSTM.toDouble() / time) * 100.0) / 100.0
+    open val etps: Double = if (time <= 0) 0.0 else round((movesETM.toDouble() / time) * 100.0) / 100.0
 
     // use these for statistics so numbers are shown as 1.00 instead of 1 or 1.0000
     open fun getTimeAsString(): String = timeToString(time)
@@ -77,5 +73,9 @@ open class Step(val name: String, stepTime: Double, val movesSTM: Int, val moves
 
     open fun getETPSAsString(): String = standardDecimalFormat.format(etps)
 
-    override fun toString(): String = "${moves.joinToString(" ")} $MOVE_NAME_SEPARATOR $name".trim()
+    open fun getMovesAsString(): String = moves.joinToString(" ")
+
+    open fun getComment(): String = "$MOVE_NAME_SEPARATOR $name"
+
+    override fun toString(): String = "${getMovesAsString()} ${getComment()}".trim()
 }

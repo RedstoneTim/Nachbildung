@@ -8,7 +8,7 @@ import java.text.ParsePosition
 import java.util.*
 
 /**
- * A [TextField] that only accepts [Int] values
+ * A [TextField] that only accepts [Int] values.
  */
 class IntTextField(value: Int = 0) : TextField(value.toString()) {
 
@@ -28,6 +28,9 @@ class IntTextField(value: Int = 0) : TextField(value.toString()) {
         textFormatter = timeFormatter
     }
 
+    /**
+     * The text in [Int] format.
+     */
     var textAsInt: Int
         get() = text.toIntOrNull() ?: 0
         set(value) {

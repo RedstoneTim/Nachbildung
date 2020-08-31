@@ -20,21 +20,30 @@ import redstonetim.nachbildung.gui.SolveNode
 import redstonetim.nachbildung.io.IOHandler
 import redstonetim.nachbildung.io.JSONSerializable
 
+/**
+ * Interface for converting reconstructions and solves to a specific format.
+ */
 interface Exporter : JSONSerializable<Exporter> {
     companion object {
         val converterMap = HashMap<String, Exporter>()
 
         init {
-            for (converter in arrayOf(MarkdownExporter, BBCodeExporter)) {
+            for (converter in arrayOf(MarkdownExporter, BBCodeExporter, TxtExporter)) {
                 converterMap[converter.toString()] = converter
             }
         }
 
+        /**
+         * Opens a window to export the given reconstruction.
+         */
         fun exportReconstruction(reconstruction: ReconstructionNode) {
             reconstruction.update(true)
             export(reconstruction, reconstruction.getSuggestedFileName())
         }
 
+        /**
+         * Opens a window to export the given solve.
+         */
         fun exportSolve(solve: SolveNode) {
             solve.update(true)
             export(solve, solve.getSuggestedFileName())
@@ -44,6 +53,7 @@ interface Exporter : JSONSerializable<Exporter> {
             val exportStage = Stage()
             exportStage.initModality(Modality.APPLICATION_MODAL)
             val output = TextArea()
+            output.style = "-fx-font-family: 'monospaced';"
             output.promptText = "Output"
             output.isEditable = false
 
@@ -91,11 +101,20 @@ interface Exporter : JSONSerializable<Exporter> {
         }
     }
 
+    /**
+     * The file endings that should show up when saving the output.
+     */
     val fileEndings: Array<FileChooser.ExtensionFilter>
         get() = arrayOf(FileChooser.ExtensionFilter("Text files", ".txt"), FileChooser.ExtensionFilter("All files", "*.*"))
 
+    /**
+     * Returns the converted reconstruction.
+     */
     fun processReconstruction(reconstruction: ReconstructionNode): String
 
+    /**
+     * Returns the converted solve.
+     */
     fun processSolve(solve: SolveNode): String
 
     override fun toString(): String

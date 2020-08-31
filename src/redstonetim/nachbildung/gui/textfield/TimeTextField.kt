@@ -5,7 +5,7 @@ import javafx.scene.control.TextFormatter
 import redstonetim.nachbildung.step.Step
 
 /**
- * A [TextField] that only accepts time values
+ * A [TextField] that only accepts time values.
  */
 class TimeTextField(value: Double = 0.0, val acceptDNF: Boolean = false) : TextField(Step.timeToString(value)) {
 
@@ -22,6 +22,9 @@ class TimeTextField(value: Double = 0.0, val acceptDNF: Boolean = false) : TextF
         textFormatter = timeFormatter
     }
 
+    /**
+     * The text in a time ([Double]) format.
+     */
     var textAsTime: Double
         get() = Step.parseTime(text)
         set(value) {
