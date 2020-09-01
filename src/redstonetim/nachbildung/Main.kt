@@ -1,11 +1,15 @@
 package redstonetim.nachbildung
 
-import com.sun.deploy.uitoolkit.impl.fx.HostServicesFactory
 import javafx.application.Application
+import javafx.scene.Scene
+import javafx.scene.control.TextField
+import javafx.stage.Modality
 import javafx.stage.Stage
 import redstonetim.nachbildung.gui.MainScene
 import redstonetim.nachbildung.gui.fxml.FXMLHandler
 import redstonetim.nachbildung.io.IOHandler
+import java.awt.Desktop
+import java.net.URL
 
 // TODO: Use dialog/alert thing for dialogs/alerts (mainly setting and save or not)
 /**
@@ -30,11 +34,11 @@ class Main : Application() {
     override fun start(stage: Stage) {
         Main.stage = stage
 
-        // Load all necessary files
-        IOHandler.loadFiles()
-
         stage.title = TITLE
         stage.scene = FXMLHandler.loadMainScene()
+
+        // Load all necessary files
+        IOHandler.loadFiles()
 
         stage.setOnCloseRequest { event ->
             for (reconstruction in MainScene.instance.getReconstructions()) {
@@ -52,6 +56,17 @@ class Main : Application() {
     }
 
     fun openLink(link: String) {
-        HostServicesFactory.getInstance(this).showDocument(link)
+        try {
+            Desktop.getDesktop().browse(URL(link).toURI())
+            throw java.lang.Exception()
+        } catch (e: Exception) {
+            val stage = Stage()
+            stage.initModality(Modality.APPLICATION_MODAL)
+            val textField = TextField(link)
+            textField.isEditable = false
+            stage.scene = Scene(textField)
+            stage.title = TITLE
+            stage.showAndWait()
+        }
     }
 }
