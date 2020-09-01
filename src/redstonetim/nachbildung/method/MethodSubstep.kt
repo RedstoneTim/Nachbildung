@@ -5,7 +5,7 @@ import redstonetim.nachbildung.step.Step
 /**
  * Represents a substep of a [Method], used for statistics.
  */
-open class MethodSubstep(val name: String, val identifier: String = name, val countStep: (List<Step>, Int) -> Boolean) {
+open class MethodSubstep(val name: String, val identifier: String = name, val shouldCountStep: (List<Step>, Int) -> Boolean) {
     companion object : HashMap<String, MethodSubstep>() {
         private val LAST_PAIR_REGEX = Regex(".*LS|.*LP|.*LE")
         private val OLS_REGEX = Regex("$LAST_PAIR_REGEX|(O|PO|OCE|OCPE|OC\\(P\\)E|OC|CO|EO|2G|ZZ|ZB|1L)LL|OLLCP|OLL\\(CP\\)")
@@ -89,7 +89,7 @@ open class MethodSubstep(val name: String, val identifier: String = name, val co
     }
 
     open fun test(steps: List<Step>, currentIndex: Int): Boolean {
-        return countStep.invoke(steps, currentIndex)
+        return shouldCountStep.invoke(steps, currentIndex)
     }
 
     fun register() {

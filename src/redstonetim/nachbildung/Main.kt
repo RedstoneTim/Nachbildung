@@ -58,7 +58,6 @@ class Main : Application() {
     fun openLink(link: String) {
         try {
             Desktop.getDesktop().browse(URL(link).toURI())
-            throw java.lang.Exception()
         } catch (e: Exception) {
             val stage = Stage()
             stage.initModality(Modality.APPLICATION_MODAL)
