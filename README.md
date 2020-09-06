@@ -1,5 +1,6 @@
 # Nachbildung
-Reconstructing Rubik's Cube solves made easier, written in Kotlin using JavaFX.
+Reconstructing Rubik's Cube solves made easier, written in Kotlin using JavaFX.  
+[SpeedSolving thread](https://www.speedsolving.com/threads/nachbildung-solve-reconstruction-tool.78494)
 
 # Download
 [The latest version](https://github.com/RedstoneTim/Nachbildung/releases/latest).
